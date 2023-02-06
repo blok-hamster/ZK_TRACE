@@ -18,6 +18,7 @@ import * as dagCBOR from "@ipld/dag-cbor";
 import { CarWriter } from "@ipld/car/writer";
 import { MerkleTree } from "merkletreejs";
 import keccak256 from "keccak256";
+import axios from "axios";
 
 dotenv.config();
 
@@ -137,16 +138,20 @@ const initPrivateStorage = async () => {
 
 //const ipfs = await IPFS.create();
 const uploadCarToIPFS = async (traceAddress) => {
-  const storage = await initilizeWeb3Storage();
-  const inStream = fs.createReadStream(`./cars/${traceAddress}.car`);
-  const reader = await CarReader.fromIterable(inStream);
+  try {
+    const storage = await initilizeWeb3Storage();
+    const inStream = fs.createReadStream(`./cars/${traceAddress}.car`);
+    const reader = await CarReader.fromIterable(inStream);
 
-  const cid = await storage.putCar(reader, {
-    name: `${traceAddress}.car`,
-    decoders: [dagCBOR],
-  });
-  console.log(`IPFS CID: ${cid}`);
-  return cid;
+    const cid = await storage.putCar(reader, {
+      name: `${traceAddress}.car`,
+      decoders: [dagCBOR],
+    });
+    console.log(`IPFS CID: ${cid}`);
+    return cid;
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 /**
@@ -155,35 +160,43 @@ const uploadCarToIPFS = async (traceAddress) => {
  * @notice This function is used to upload the car file to Storj Cloud for privacy storage
  */
 const uploadToPrivateStorage = async (traceAddress) => {
-  const s3 = await initPrivateStorage();
-  const inStream = fs.createReadStream(`./cars/${traceAddress}.car`);
-  const reader = await CarReader.fromIterable(inStream);
+  try {
+    const s3 = await initPrivateStorage();
+    const inStream = fs.createReadStream(`./cars/${traceAddress}.car`);
+    const reader = await CarReader.fromIterable(inStream);
 
-  const uploadParams = {
-    Bucket: "tracebucket",
-    Key: `${traceAddress}.car`,
-    Body: reader,
-    ContentType: application / vnd.curl.car,
-  };
-  s3.upload(uploadParams, (err, data) => {
-    err && console.log("erroe", err);
-    data && console.log("uploaded", data.Location);
-  });
+    const uploadParams = {
+      Bucket: "tracebucket",
+      Key: `${traceAddress}.car`,
+      Body: reader,
+      ContentType: application / vnd.curl.car,
+    };
+    s3.upload(uploadParams, (err, data) => {
+      err && console.log("error", err);
+      data && console.log("uploaded", data.Location);
+    });
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 const readData = async (cid) => {
   let data;
-  await axios
-    .get(`https://ipfs.io/api/v0/dag/get/${cid}`)
-    .then((result) => {
-      //console.log(result.data.data);
-      data = result.data.data;
-    })
-    .catch((err) => {
-      console.log(err);
-    });
+  try {
+    await axios
+      .get(`https://ipfs.io/api/v0/dag/get/${cid}`)
+      .then((result) => {
+        //console.log(result.data.data);
+        data = result.data.data;
+      })
+      .catch((err) => {
+        console.log(err);
+      });
 
-  return data;
+    return data;
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 const utf8Encoder = new TextEncoder();
@@ -195,16 +208,20 @@ const utf8Decoder = new TextDecoder();
  */
 const createBlock = async (data) => {
   const blocks = [];
-  const dataLeaf = await Block.encode({
-    value: { data },
-    hasher: sha256,
-    codec: dagCBOR,
-  });
-  blocks.push(dataLeaf);
+  try {
+    const dataLeaf = await Block.encode({
+      value: { data },
+      hasher: sha256,
+      codec: dagCBOR,
+    });
+    blocks.push(dataLeaf);
 
-  console.log(blocks);
-  console.log(dataLeaf.cid);
-  return { blocks, roots: [dataLeaf.cid] };
+    console.log(blocks);
+    console.log(dataLeaf.cid);
+    return { blocks, roots: [dataLeaf.cid] };
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 /**
@@ -214,14 +231,18 @@ const createBlock = async (data) => {
  */
 // @ts-ignore
 const write = async (roots, blocks, traceAddress) => {
-  const { writer, out } = CarWriter.create(roots);
-  Readable.from(out).pipe(fs.createWriteStream(`cars/${traceAddress}.car`));
-  // @ts-ignore
-  for (const block of blocks) {
-    await writer.put(block);
-    await writer.close();
+  try {
+    const { writer, out } = CarWriter.create(roots);
+    Readable.from(out).pipe(fs.createWriteStream(`cars/${traceAddress}.car`));
+    // @ts-ignore
+    for (const block of blocks) {
+      await writer.put(block);
+      await writer.close();
+    }
+    return out;
+  } catch (e) {
+    console.log(e);
   }
-  return out;
 };
 
 // @ts-ignore
@@ -236,40 +257,43 @@ const read = async (traceAddress) => {
     [sha256.code]: sha256,
   };
 
-  const instream = fs.createReadStream(`./cars/${traceAddress}.car`);
-  const reader = await CarReader.fromIterable(instream);
+  try {
+    const instream = fs.createReadStream(`./cars/${traceAddress}.car`);
+    const reader = await CarReader.fromIterable(instream);
 
-  const roots = await reader.getRoots();
-  const blocks = [];
-  let data;
-  let blockCid;
-  for await (const { cid, bytes } of reader.blocks()) {
-    const block = await Block.create({
-      cid,
-      bytes,
-      codec: codecs[cid.code],
-      hasher: hashes[cid.multihash.code],
-    });
+    const roots = await reader.getRoots();
+    const blocks = [];
+    let data;
+    let blockCid;
+    for await (const { cid, bytes } of reader.blocks()) {
+      const block = await Block.create({
+        cid,
+        bytes,
+        codec: codecs[cid.code],
+        hasher: hashes[cid.multihash.code],
+      });
 
-    blocks.push(block);
+      blocks.push(block);
 
-    const res =
-      block.value instanceof Uint8Array
-        ? utf8Decoder.decode(block.value)
-        : block.value;
+      const res =
+        block.value instanceof Uint8Array
+          ? utf8Decoder.decode(block.value)
+          : block.value;
 
-    const newData = JSON.parse(JSON.stringify(res.data));
-    data = newData;
-    blockCid = cid.toString();
+      const newData = JSON.parse(JSON.stringify(res.data));
+      data = newData;
+      blockCid = cid.toString();
 
-    console.log(
-      `Previous Block CID: ${
-        newData.previousBlockCid
-      }, New Block CID: ${cid.toString()}`
-    );
+      console.log(
+        `Previous Block CID: ${
+          newData.previousBlockCid
+        }, New Block CID: ${cid.toString()}`
+      );
+    }
+    return { blockCid, data };
+  } catch (e) {
+    console.log(e);
   }
-
-  return { blockCid, data };
 };
 
 const updatPreviousBlockCid = (data, blockCid) => {
@@ -279,17 +303,28 @@ const updatPreviousBlockCid = (data, blockCid) => {
 };
 
 const updateCar = async (data, traceAddress) => {
-  const { blockCid } = await read(traceAddress);
-  const newData = updatPreviousBlockCid(data, blockCid);
-  const { blocks, roots } = await createBlock(newData);
-  await write(roots, blocks, traceAddress);
-  console.log(`Car Packed at: cars/${traceAddress}.car`);
+  let cid;
+  try {
+    const { blockCid } = await read(traceAddress);
+    const newData = updatPreviousBlockCid(data, blockCid);
+    const { blocks, roots } = await createBlock(newData);
+    await write(roots, blocks, traceAddress);
+    cid = await uploadCarToIPFS(traceAddress);
+  } catch (e) {
+    console.log(e);
+  }
+  console.log(`Car Packed at: cars/${traceAddress}.car , CID: ${cid}`);
+  return cid;
 };
 
 const writeCar = async (data, traceAddress) => {
-  const { blocks, roots } = await createBlock(data);
-  await write(roots, blocks, traceAddress);
-  console.log(`Car Packed at: cars/${traceAddress}.car`);
+  try {
+    const { blocks, roots } = await createBlock(data);
+    await write(roots, blocks, traceAddress);
+    console.log(`Car Packed at: cars/${traceAddress}.car`);
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 ///MERKEL TREE HANDLER
@@ -297,11 +332,15 @@ const buff2Hex = (X) => "0x" + X.toString("hex");
 
 // @ts-ignore
 const getMerkelTree = async (params) => {
-  // @ts-ignore
-  const leaves = params.map((item) => keccak256(item));
-  const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
-  const root = buff2Hex(tree.getRoot());
-  return { tree, root };
+  try {
+    // @ts-ignore
+    const leaves = params.map((item) => keccak256(item));
+    const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+    const root = buff2Hex(tree.getRoot());
+    return { tree, root };
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 // @ts-ignore
@@ -312,19 +351,26 @@ const getleave = (address) => {
 
 // @ts-ignore
 const getMerkelProof = async (leaf, params) => {
-  const tree = (await getMerkelTree(params)).tree;
-  const proof = tree.getProof(leaf).map((item) => buff2Hex(item.data));
-  return proof;
+  try {
+    const tree = (await getMerkelTree(params)).tree;
+    const proof = tree.getProof(leaf).map((item) => buff2Hex(item.data));
+    return proof;
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 // @ts-ignore
 const createProof = async (address, traceAddress) => {
-  const { ...data } = await read(traceAddress);
-
-  const hexLeaf = getleave(address);
-  const proof = await getMerkelProof(hexLeaf, data.data.verifiers);
-  console.log(proof);
-  return proof;
+  try {
+    const { ...data } = await read(traceAddress);
+    const hexLeaf = getleave(address);
+    const proof = await getMerkelProof(hexLeaf, data.data.verifiers);
+    console.log(proof);
+    return proof;
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 export default router;

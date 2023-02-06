@@ -1,0 +1,28 @@
+{
+  "name": "zk-trace-sdk",
+  "version": "1.0.0",
+  "description": "Sdk for integrating ZK trace into supplychain managment systems",
+  "main": "dist/index.js",
+  "module": "dist/index.m.js",
+  "unpkg": "dist/index.umd.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "rm -rf dist && microbundle --tsconfig tsconfig.json --no-sourcemap"
+  },
+  "keywords": [
+    "zk-trace",
+    "supplychain"
+  ],
+  "author": "Joshua Obigwe",
+  "license": "ISC",
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "microbundle": "^0.15.1"
+  },
+  "dependencies": {
+    "ethers": "^5.7.2",
+    "isomorphic-unfetch": "^4.0.2"
+  }
+}
