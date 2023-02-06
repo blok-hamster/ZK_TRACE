@@ -99,6 +99,23 @@ router
     });
   });
 
+router
+  .route(`/readData`, {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+  .get(async (req, res) => {
+    const cid = req.body.cid;
+    let data = await readData(cid);
+    console.log(data);
+
+    res.status(200).json({
+      message: "ok",
+      data: data,
+    });
+  });
+
 //IPLD & IPFS Handlers
 const initilizeWeb3Storage = async () => {
   const storage = new Web3Storage({ token: process.env.WEB3_STORAGE_API });
@@ -137,7 +154,7 @@ const uploadCarToIPFS = async (traceAddress) => {
  * @param {string} traceAddress
  * @notice This function is used to upload the car file to Storj Cloud for privacy storage
  */
-const uploadCarToStorj = async (traceAddress) => {
+const uploadToPrivateStorage = async (traceAddress) => {
   const s3 = await initPrivateStorage();
   const inStream = fs.createReadStream(`./cars/${traceAddress}.car`);
   const reader = await CarReader.fromIterable(inStream);
@@ -152,6 +169,21 @@ const uploadCarToStorj = async (traceAddress) => {
     err && console.log("erroe", err);
     data && console.log("uploaded", data.Location);
   });
+};
+
+const readData = async (cid) => {
+  let data;
+  await axios
+    .get(`https://ipfs.io/api/v0/dag/get/${cid}`)
+    .then((result) => {
+      //console.log(result.data.data);
+      data = result.data.data;
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+
+  return data;
 };
 
 const utf8Encoder = new TextEncoder();
@@ -288,8 +320,6 @@ const getMerkelProof = async (leaf, params) => {
 // @ts-ignore
 const createProof = async (address, traceAddress) => {
   const { ...data } = await read(traceAddress);
-  console.log(data.data.verifiers);
-  const tree = await getMerkelTree(data.data.verifiers);
 
   const hexLeaf = getleave(address);
   const proof = await getMerkelProof(hexLeaf, data.data.verifiers);
