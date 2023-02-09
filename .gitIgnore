@@ -3,3 +3,5 @@ contract-hardhat/.env
 server/node_modules
 server/.env
 sdk/node_modules
+sdk-test/node_modules
+sdk-test/.env

@@ -1,8 +1,8 @@
-import { ethers, Wallet, Signer } from "ethers";
+import { ethers } from "ethers";
 import fetch from "isomorphic-unfetch";
 
 type Config = {
-  nodeEndpoint: string;
+  nodeEndpoint?: string;
   apikey?: string;
   baseUri?: string;
 };
@@ -13,8 +13,9 @@ export abstract class Base {
   private baseUrl: string;
 
   constructor(config: Config) {
-    this.nodeEndpoint = config.nodeEndpoint;
-    this.baseUrl = config.baseUri || `http://localhost:8080/`;
+    this.nodeEndpoint =
+      config.nodeEndpoint || `https://api.hyperspace.node.glif.io/rpc/v1`;
+    this.baseUrl = config.baseUri || `http://localhost:5000/`;
     this.apikey = config.apikey;
   }
 

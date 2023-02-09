@@ -5,3 +5,7 @@ export declare type Data = {
   txDetails: object;
   previousBlockCid: string;
 };
+
+export declare type Cid = {
+  cid: string;
+};

@@ -101,13 +101,13 @@ router
   });
 
 router
-  .route(`/readData`, {
+  .route(`/readData/:cid`, {
     headers: {
       "Content-Type": "application/json",
     },
   })
   .get(async (req, res) => {
-    const cid = req.body.cid;
+    const cid = req.params.cid;
     let data = await readData(cid);
     console.log(data);
 
