@@ -23,7 +23,7 @@ import axios from "axios";
 dotenv.config();
 
 router
-  .route(`/createCar`, {
+  .route(`/createCar/:traceAddress`, {
     headers: {
       "Content-Type": "application/json",
     },
@@ -47,7 +47,7 @@ router
   })
 
   .get(async (req, res) => {
-    const traceAddress = req.body.traceAddress;
+    const traceAddress = req.params.traceAddress;
     const { ...data } = await read(traceAddress);
     res.status(200).json({
       blockCid: data.blockCid,
@@ -57,25 +57,25 @@ router
   })
 
   .put(async (req, res) => {
-    const traceAddress = req.body.traceAddress;
+    const traceAddress = req.params.traceAddress;
     const data = req.body;
 
-    await updateCar(data, traceAddress);
+    const cid = await updateCar(data, traceAddress);
 
     res.status(200).json({
-      // cid: ipfsCid,
       message: `Car file updated`,
+      cid: cid,
     });
   });
 
 router
-  .route(`/uploadCar`, {
+  .route(`/uploadCar/:traceAddress`, {
     headers: {
       "Content-Type": "application/json",
     },
   })
   .post(async (req, res) => {
-    const traceAddress = req.body.traceAddress;
+    const traceAddress = req.params.traceAddress;
     const cid = await uploadCarToIPFS(traceAddress);
     res.status(200).json({
       message: "car uploaded To ipfs",
