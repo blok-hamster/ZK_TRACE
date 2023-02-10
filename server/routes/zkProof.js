@@ -31,7 +31,7 @@ router
         "application/json, text/plain, */*, multipart/form-data, application/x-www-form-urlencoded,",
     },
   })
-  .get(async (req, res) => {
+  .post(async (req, res) => {
     const proofDetails = req.body;
     console.log(proofDetails);
     const zkP = proofDetails.proofBuffer;

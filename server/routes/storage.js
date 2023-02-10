@@ -31,7 +31,7 @@ router
   .post(async (req, res) => {
     const treeDetails = await getMerkelTree(req.body.verifiers);
     const data = {
-      traceAddress: req.body.traceAddress,
+      traceAddress: req.params.traceAddress,
       verifiersRoot: treeDetails.root,
       verifiers: req.body.verifiers,
       txDetails: req.body.txDetails,
@@ -84,16 +84,15 @@ router
   });
 
 router
-  .route(`/getMerkelProof`, {
+  .route(`/getMerkelProof/:traceAddress/:verifier`, {
     headers: {
       "Content-Type": "application/json",
     },
   })
   .get(async (req, res) => {
-    const traceAddress = req.body.traceAddress;
-    const verifierAddr = req.body.verifier;
+    const traceAddress = req.params.traceAddress;
+    const verifierAddr = req.params.verifier;
     const proof = await createProof(verifierAddr, traceAddress);
-
     res.status(200).json({
       message: "Proof created",
       proof: proof,
@@ -335,7 +334,7 @@ const getMerkelTree = async (params) => {
   try {
     // @ts-ignore
     const leaves = params.map((item) => keccak256(item));
-    const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+    const tree = new MerkleTree(leaves, keccak256); //, { sortPairs: true });
     const root = buff2Hex(tree.getRoot());
     return { tree, root };
   } catch (e) {
@@ -352,8 +351,8 @@ const getleave = (address) => {
 // @ts-ignore
 const getMerkelProof = async (leaf, params) => {
   try {
-    const tree = (await getMerkelTree(params)).tree;
-    const proof = tree.getProof(leaf).map((item) => buff2Hex(item.data));
+    const { tree } = await getMerkelTree(params);
+    const proof = await tree.getProof(leaf).map((item) => buff2Hex(item.data));
     return proof;
   } catch (e) {
     console.log(e);

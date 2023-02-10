@@ -1,10 +1,10 @@
 import { Base } from "./base";
-import { Storage } from "./storage";
+import { TraceProtocol } from "./traceProtocol";
 import { applyMixins } from "./utils";
 
 class ZkTrace extends Base {}
-interface ZkTrace extends Storage {}
+interface ZkTrace extends TraceProtocol {}
 
-applyMixins(ZkTrace, [Storage]);
+applyMixins(ZkTrace, [TraceProtocol]);
 
 export default ZkTrace;

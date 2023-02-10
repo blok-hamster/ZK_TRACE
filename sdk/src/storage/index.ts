@@ -10,8 +10,11 @@ export class Storage extends Base {
     return this.invoke(`storage/createCar/${traceAddress}`);
   }
 
-  public async createCar(data: Data): Promise<CreateCarReturn> {
-    return this.invoke(`storage/createCar`, {
+  public async createCar(
+    data: Data,
+    traceAddress: string
+  ): Promise<CreateCarReturn> {
+    return this.invoke(`storage/createCar/${traceAddress}`, {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -31,5 +34,17 @@ export class Storage extends Base {
       method: "PUT",
       body: JSON.stringify(data),
     });
+  }
+
+  public async getMerkelProof(
+    traceAddress: string,
+    verifierAddress: string
+  ): Promise<object> {
+    return this.invoke(
+      `storage/getMerkelProof/${traceAddress}/${verifierAddress}`,
+      {
+        method: "GET",
+      }
+    );
   }
 }

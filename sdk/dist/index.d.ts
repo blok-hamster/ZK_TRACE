@@ -1,7 +1,7 @@
 import { Base } from "./base";
-import { Storage } from "./storage";
+import { TraceProtocol } from "./traceProtocol";
 declare class ZkTrace extends Base {
 }
-interface ZkTrace extends Storage {
+interface ZkTrace extends TraceProtocol {
 }
 export default ZkTrace;
