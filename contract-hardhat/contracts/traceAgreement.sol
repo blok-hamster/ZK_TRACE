@@ -23,13 +23,16 @@ contract TraceAgreement is Pausable, Ownable {
 
     Agreement agreements;
     uint signCount = 0;
+    bool initilized;
     
 
-    constructor (bytes32 _verifierRoot, bytes32 _initiatorRoot, address _traceHub) {
+    function initilize(bytes32 _verifierRoot, bytes32 _initiatorRoot, address _traceHub) external {
+        require(!initilize, "already intilized")
         _updateRoot(_verifierRoot, _initiatorRoot);
         traceHub = _traceHub;
         status = AgreementStatus.Created;
         transferOwnership(_traceHub);
+        initilized = true;
     }
 
 
@@ -105,9 +108,9 @@ contract TraceAgreement is Pausable, Ownable {
         _unpause();
     }
 
-    function initiatorSign(bytes32[] calldata _proof) public view returns (bool) {
+    function initiatorSign(bytes32[] calldata _proof, address addr) public view returns (bool) {
         bytes32 root = merkelRoots["initiatorRoot"];
-        bytes32 leaf = keccak256(abi.encodePacked(_msgSender()));
+        bytes32 leaf = keccak256(abi.encodePacked(_addr));
         return MerkleProof.verify(_proof, root, leaf);
     }
 
@@ -116,5 +119,5 @@ contract TraceAgreement is Pausable, Ownable {
 interface ITraceAgreement {
     function updateRoot(bytes32 verifierRoot, bytes32 initiatorRoot) external;
     function verifyByOrder(bytes32[] calldata _proof, bytes32 nullifier) external view returns (bool);
-    function verifierSign(bytes32[] calldata _proof, address addr) external view returns (bool);
+    function initiatorSign(bytes32[] calldata _proof, address addr) external view returns (bool);
 }
