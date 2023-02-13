@@ -5,13 +5,12 @@ export declare class Zk extends Storage {
     rootToPath: string;
     private randomNumber;
     getNullifier(salt: String): Promise<any>;
-    generateZkProof(input: Array<string>): Promise<object>;
-    verifyZkProof(proof: Proof): Promise<object>;
     private fileSystemResolver;
     private getSource;
     private getZokrateProvider;
     private getArtifacts;
     private getPreImage;
-    generateZkProof1(salt: string): Promise<object>;
-    verifyZkProof1(proofObj: Proof): Promise<object>;
+    generateZkProof(salt: string): Promise<object>;
+    verifyZkProof(proofObj: Proof): Promise<object>;
+    verifyZkProof1(proof: Proof): Promise<object>;
 }

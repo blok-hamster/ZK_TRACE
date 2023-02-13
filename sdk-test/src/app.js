@@ -6,7 +6,7 @@ const traceClient = new ZkTrace({
 
 const main = async () => {
   const data = await traceClient.readCid(
-    "bafyreidlky6nmgbsj4xx67uzn2o4gf2ses5ncx5hyvorm74e2luehzghue"
+    "bafyreidfxlikkwv42bobiyv7fi5x4kespo4lhf7ov6zu65yoivwffjfzq4"
   );
 
   console.log(data);
@@ -14,7 +14,7 @@ const main = async () => {
 
 const createCar = async () => {
   let carData = {
-    traceAddress: "0x123",
+    traceAddress: "",
     verifiersRoot: "",
     verifiers: ["0x12", "0x13", "0x14", "0x1122"],
     txDetails: {
@@ -23,7 +23,7 @@ const createCar = async () => {
     },
     previousBlockCid: "",
   };
-  const result = await traceClient.createCar(carData, "0x123");
+  const result = await traceClient.createCar(carData, "0x12345");
   console.log(result);
 };
 
@@ -81,7 +81,7 @@ const getRand = async () => {
 
 //main();
 
-//createCar();
+createCar();
 
 //readCarData();
 

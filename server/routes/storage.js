@@ -232,6 +232,9 @@ const createBlock = async (data) => {
 const write = async (roots, blocks, traceAddress) => {
   try {
     const { writer, out } = CarWriter.create(roots);
+    if (!fs.existsSync("./cars")) {
+      fs.mkdirSync("./cars");
+    }
     Readable.from(out).pipe(fs.createWriteStream(`cars/${traceAddress}.car`));
     // @ts-ignore
     for (const block of blocks) {
@@ -318,8 +321,13 @@ const updateCar = async (data, traceAddress) => {
 
 const writeCar = async (data, traceAddress) => {
   try {
+    let cid;
     const { blocks, roots } = await createBlock(data);
     await write(roots, blocks, traceAddress);
+    cid = await uploadCarToIPFS(traceAddress);
+    console.log(`Car Packed at: cars/${traceAddress}.car`);
+    console.log(cid);
+
     console.log(`Car Packed at: cars/${traceAddress}.car`);
   } catch (e) {
     console.log(e);

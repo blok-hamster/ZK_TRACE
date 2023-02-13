@@ -15,6 +15,7 @@ contract TraceAgreement is Pausable, Ownable {
     address public traceHub;
     address traceAdmin;
     address factoryAddress;
+    address supplier;
 
     struct Agreement {
         uint agreementId;
@@ -30,9 +31,10 @@ contract TraceAgreement is Pausable, Ownable {
     bool initilized;
     bool adminAdded;
 
-    function addTraceAdmin(address _traceAdmin, address _factoryAddress, address _traceHub) external {
+    function addTraceAdmin(address _traceAdmin, address _supplier,address _factoryAddress, address _traceHub) external {
         require( adminAdded == false, "Admin already updated");
         traceAdmin = _traceAdmin;
+        supplier = _supplier;
         traceHub = _traceHub;
         factoryAddress = _factoryAddress;
         status = AgreementStatus.Created;
@@ -40,26 +42,22 @@ contract TraceAgreement is Pausable, Ownable {
     }
     
 
-    function initilize(bytes32 _verifierRoot, bytes32 _initiatorRoot, bytes32[] calldata _nullifiers,string calldata agreementUri) external {
+    function initilize(bytes32 _verifierRoot, bytes32[] calldata _nullifiers,string calldata agreementUri) external {
         require(msg.sender == traceAdmin, "Un-auth: Not trace admin");
         require(!initilize, "already intilized");
         require(status == AgreementStatus.Created, "Agreement is already active");
         require(signCount == 0, "Agreement is already active");
-        _updateRoot(_verifierRoot, _initiatorRoot);
+        _updateRoot(_verifierRoot);
         status = AgreementStatus.Active;
-        ITraceAgreementFactory(factoryAddress).initilizeAgreement( _verifierRoot, _initiatorRoot, _nullifiers,agreementUri, address(this));
-        initilized = true;
+         initilized = true;
+        ITraceAgreementFactory(factoryAddress).initilizeAgreement( _verifierRoot, _nullifiers,agreementUri, address(this));
     }
 
-
-    function _updateRoot(bytes32 verifierRoot, bytes32 initiatorRoot) internal {
+    function _updateRoot(bytes32 verifierRoot) internal {
         string memory _verifierRoot = "verifierRoot";
-        string memory _initiatorRoot = "initiatorRoot";
         uint id = ITraceHub(traceHub).getAgreementId(address(this));
 
         merkelRoots[_verifierRoot] = verifierRoot;
-        merkelRoots[_initiatorRoot] = initiatorRoot;
-        
         agreements.agreementId = id;
         agreements.createdAt = block.timestamp;
     }
@@ -115,6 +113,14 @@ contract TraceAgreement is Pausable, Ownable {
         return agreements.agreementId;
     }
 
+    function getSupplier() external view returns(address){
+        return supplier;
+    }
+
+    function getTraceAdmin() external view returns(address){
+        return traceAdmin;
+    }
+
 
     function pause() public onlyOwner {
         _pause();
@@ -124,16 +130,11 @@ contract TraceAgreement is Pausable, Ownable {
         _unpause();
     }
 
-    function initiatorSign(bytes32[] calldata _proof, address addr) public view returns (bool) {
-        bytes32 root = merkelRoots["initiatorRoot"];
-        bytes32 leaf = keccak256(abi.encodePacked(_addr));
-        return MerkleProof.verify(_proof, root, leaf);
-    }
-
 }
 
 interface ITraceAgreement {
+    function getSupplier() external view returns(address);
     function updateRoot(bytes32 verifierRoot, bytes32 initiatorRoot) external;
     function verifyByOrder(bytes32[] calldata _proof, bytes32 nullifier) external view returns (bool);
-    function initiatorSign(bytes32[] calldata _proof, address addr) external view returns (bool);
+    function getTraceAdmin() external view returns(address);
 }

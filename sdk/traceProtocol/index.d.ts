@@ -1,5 +1,7 @@
 import { Zk } from "src/zk";
-import { NewTraceData } from "./types";
 export declare class TraceProtocol extends Zk {
-    createTraceAgreement(traceData: NewTraceData, factoryAddress: string, signer: any): Promise<any>;
+    createTraceAgreement(adminAddress: string, signer: any): Promise<any>;
+    initilizeAgreement(verifiers: Array<string>, traceAddress: string, signer: any): Promise<any>;
+    private getVerifiersDetails;
+    verifyByOrder(traceAddress: string, proof: Array<string>, nullifier: string, signer: any): Promise<any>;
 }

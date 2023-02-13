@@ -1,6 +1,7 @@
 import { Zk } from "src/zk";
-import { NewTraceData } from "./types";
+import { verifierDetails } from "./types";
 import { traceFactoryAbi, traceHubAbi, traceAgreementAbi } from "./abi/index";
+import keccak256 from "keccak256";
 import { ethers } from "ethers";
 
 export class TraceProtocol extends Zk {
@@ -10,7 +11,6 @@ export class TraceProtocol extends Zk {
   ): Promise<any> {
     try {
       const provider = await this.getProvider();
-
       const traceFactory = new ethers.Contract(
         this.getFactoryAddress(),
         traceFactoryAbi,
@@ -19,7 +19,7 @@ export class TraceProtocol extends Zk {
 
       let events = [];
       const tx = await traceFactory.newTraceAgreement(adminAddress, {
-        gasLimit: 210000,
+        gasLimit: 21000,
         maxFeePerGas: provider.getGasPrice(),
         maxPriorityFeePerGas: provider.getGasPrice(),
       });
@@ -52,11 +52,13 @@ export class TraceProtocol extends Zk {
   }
 
   public async initilizeAgreement(
-    data: NewTraceData,
+    verifiers: Array<string>,
     traceAddress: string,
+    txDetails: object,
     signer: any
   ): Promise<any> {
     try {
+      const verifierDetails: Array<object> = [];
       const provider = await this.getProvider();
       const traceAgreement = new ethers.Contract(
         traceAddress,
@@ -64,13 +66,23 @@ export class TraceProtocol extends Zk {
         signer
       );
 
+      const details = (await this.getVerifiersDetails(verifiers)).details;
+      const data = {
+        traceAddress: traceAddress,
+        verifiersRoot: details.verifiersRoot,
+        verifiers: verifiers,
+        txDetails: txDetails,
+        previousBlockCid: "",
+      };
+
+      const write = await this.writeCar(data, traceAddress);
+
       const tx = await traceAgreement.initilize(
-        data.verifierRoot,
-        data.initiatorRoot,
-        data.nullifiers,
-        data.agreementUri,
+        details.verifiersRoot,
+        details.nullifiers,
+        write.cid,
         {
-          gasLimit: 210000,
+          gasLimit: 21000,
           maxFeePerGas: provider.getGasPrice(),
           maxPriorityFeePerGas: provider.getGasPrice(),
         }
@@ -81,9 +93,20 @@ export class TraceProtocol extends Zk {
         throw new Error("initilization failed");
       }
 
+      for (let i = 0; i < verifiers.length; i++) {
+        const e = {
+          verifier: verifiers[i],
+          nullifier: details.nullifiers[i],
+          merkelProof: await this.createProof(verifiers[i], verifiers),
+        };
+
+        verifierDetails.push(e);
+      }
+
       return {
         message: "ok",
         transactionHash: receipt.hash,
+        verificationDetails: verifierDetails,
       };
     } catch (e) {
       console.log(e);
@@ -136,6 +159,62 @@ export class TraceProtocol extends Zk {
       return {
         message: e,
       };
+    }
+  }
+
+  public async createZkProof(
+    traceAddress: string,
+    traceHubAddress: string,
+    signer: any
+  ): Promise<object> {
+    const proof = await this.generateZkProof(traceAddress);
+    const provider = await this.getProvider();
+
+    const traceHub = new ethers.Contract(
+      traceHubAddress,
+      traceHubAbi,
+      provider
+    );
+
+    const traceAgreement = new ethers.Contract(
+      traceAddress,
+      traceAgreementAbi,
+      signer
+    );
+
+    const approved = await traceHub.checkSupplierApproved(traceAddress);
+    if (!approved) {
+      throw new Error("Supplier has not approved");
+    }
+
+    const zkProof = await this.generateZkProof(traceAddress);
+  }
+
+  private async getVerifiersDetails(
+    verifiers: Array<string>
+  ): Promise<verifierDetails> {
+    try {
+      const abi = ethers.utils.defaultAbiCoder;
+      const provider = await this.getProvider();
+      const { root } = await this.getMerkelTree(verifiers);
+
+      const timeStamp: any = Math.round(new Date().getTime() / 1000).toString();
+      const nullifiers: any = verifiers.forEach((verifier) => {
+        const saltedNull: any = this.getNullifier(verifier);
+        const params: number =
+          saltedNull * provider.getBlockNumber() + timeStamp;
+        keccak256(abi.encode(["uint"], [params]));
+      });
+
+      return {
+        message: "ok",
+        details: {
+          verifiersRoot: root,
+          nullifiers: nullifiers,
+        },
+      };
+    } catch (e) {
+      console.log(e);
     }
   }
 }

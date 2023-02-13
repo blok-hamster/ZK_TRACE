@@ -1,6 +1,20 @@
 import { Base } from "src/base";
 import { Data, CarData, CreateCarReturn, IpfsReturn } from "./types";
 
+import { Web3Storage, File } from "web3.storage";
+import { CarReader } from "@ipld/car/reader";
+import * as fs from "fs";
+import { Readable } from "stream";
+import * as Block from "multiformats/block";
+import { sha256 } from "multiformats/hashes/sha2";
+import * as raw from "multiformats/codecs/raw";
+import * as dagJSON from "@ipld/dag-json";
+import * as dagCBOR from "@ipld/dag-cbor";
+import { CarWriter } from "@ipld/car/writer";
+import { MerkleTree } from "merkletreejs";
+import keccak256 from "keccak256";
+import axios from "axios";
+
 export class Storage extends Base {
   public async readCid(cid: string): Promise<Data> {
     return this.invoke(`storage/readData/${cid}`);
@@ -47,4 +61,234 @@ export class Storage extends Base {
       }
     );
   }
+
+  /// Helpers
+
+  private initilizeWeb3Storage = async () => {
+    const storage = new Web3Storage({ token: this.getWeb3StorageKey() });
+    return storage;
+  };
+
+  private uploadCarToIPFS = async (traceAddress: string) => {
+    try {
+      const storage = await this.initilizeWeb3Storage();
+      const inStream = fs.createReadStream(`./cars/${traceAddress}.car`);
+      const reader = await CarReader.fromIterable(inStream);
+
+      const cid = await storage.putCar(reader, {
+        name: `${traceAddress}.car`,
+        decoders: [dagCBOR],
+      });
+      console.log(`IPFS CID: ${cid}`);
+      return cid;
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  public readData = async (cid: string) => {
+    let data: object;
+    try {
+      await axios
+        .get(`https://ipfs.io/api/v0/dag/get/${cid}`)
+        .then((result) => {
+          data = result.data.data;
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+
+      return data;
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  utf8Encoder = new TextEncoder();
+  utf8Decoder = new TextDecoder();
+
+  /**
+   *
+   * @param {string} data is a string version of a json object that contains the data to be stored in the car file
+   */
+  private createBlock = async (data: any) => {
+    const blocks = [];
+    try {
+      const dataLeaf = await Block.encode({
+        value: { data },
+        hasher: sha256,
+        codec: dagCBOR,
+      });
+      blocks.push(dataLeaf);
+
+      console.log(blocks);
+      console.log(dataLeaf.cid);
+      return { blocks, roots: [dataLeaf.cid] };
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  /**
+   *
+   * @param roots of the roots of the car file
+   * @param blocks of the blocks of the car file
+   */
+  // @ts-ignore
+  private write = async (roots: any, blocks: any, traceAddress: string) => {
+    try {
+      if (!fs.existsSync("./cars")) {
+        fs.mkdirSync("./cars");
+      }
+      const { writer, out } = CarWriter.create(roots);
+      Readable.from(out).pipe(fs.createWriteStream(`cars/${traceAddress}.car`));
+      // @ts-ignore
+      for (const block of blocks) {
+        await writer.put(block);
+        await writer.close();
+      }
+      return out;
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  // @ts-ignore
+  private read = async (traceAddress: string) => {
+    const codecs = {
+      [raw.code]: raw,
+      [dagJSON.code]: dagJSON,
+      [dagCBOR.code]: dagCBOR,
+    };
+
+    const hashes = {
+      [sha256.code]: sha256,
+    };
+
+    try {
+      const instream = fs.createReadStream(`./cars/${traceAddress}.car`);
+      const reader = await CarReader.fromIterable(instream);
+
+      const roots = await reader.getRoots();
+      const blocks = [];
+      let data: any;
+      let blockCid: string;
+      for await (const { cid, bytes } of reader.blocks()) {
+        const block = await Block.create({
+          cid,
+          bytes,
+          codec: codecs[cid.code],
+          hasher: hashes[cid.multihash.code],
+        });
+
+        blocks.push(block);
+
+        const res: any =
+          block.value instanceof Uint8Array
+            ? this.utf8Decoder.decode(block.value)
+            : block.value;
+
+        const newData = JSON.parse(JSON.stringify(res.data));
+        data = newData;
+        blockCid = cid.toString();
+
+        console.log(
+          `Previous Block CID: ${
+            newData.previousBlockCid
+          }, New Block CID: ${cid.toString()}`
+        );
+      }
+      return { blockCid, data };
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  private updatPreviousBlockCid = (data: any, blockCid: string) => {
+    let newData = data;
+    newData.previousBlockCid = blockCid;
+    return newData;
+  };
+
+  updateCar1 = async (data: any, traceAddress: string) => {
+    let cid: string;
+    try {
+      const { blockCid } = await this.read(traceAddress);
+      const newData = this.updatPreviousBlockCid(data, blockCid);
+      const { blocks, roots } = await this.createBlock(newData);
+      await this.write(roots, blocks, traceAddress);
+      cid = await this.uploadCarToIPFS(traceAddress);
+    } catch (e) {
+      console.log(e);
+    }
+    console.log(`Car Packed at: cars/${traceAddress}.car , CID: ${cid}`);
+    return cid;
+  };
+
+  public writeCar = async (data: any, traceAddress: string) => {
+    let cid: string;
+    try {
+      const { blocks, roots } = await this.createBlock(data);
+      await this.write(roots, blocks, traceAddress);
+      cid = await this.uploadCarToIPFS(traceAddress);
+      console.log(`Car Packed at: cars/${traceAddress}.car`);
+      return {
+        message: "ok",
+        cid: cid,
+      };
+    } catch (e) {
+      console.log(e);
+      return {
+        message: e,
+      };
+    }
+  };
+
+  ///MERKEL TREE HANDLER
+  buff2Hex = (x: any) => "0x" + x.toString("hex");
+
+  // @ts-ignore
+  getMerkelTree = async (params: Array<string>) => {
+    try {
+      // @ts-ignore
+      const leaves = params.map((item) => keccak256(item));
+      const tree = new MerkleTree(leaves, keccak256); //, { sortPairs: true });
+      const root = this.buff2Hex(tree.getRoot());
+      return { tree, root };
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  // @ts-ignore
+  getleave = (address: string) => {
+    const hexLeaf = this.buff2Hex(keccak256(address));
+    return hexLeaf;
+  };
+
+  // @ts-ignore
+  private async getMerkelProof1(leaf: string, params: Array<string>) {
+    try {
+      const { tree } = await this.getMerkelTree(params);
+      const proof = tree.getProof(leaf).map((item) => this.buff2Hex(item.data));
+      return proof;
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  // @ts-ignore
+  public createProof = async (
+    address: string,
+    params: Array<string>
+  ): Promise<any> => {
+    try {
+      const hexLeaf = this.getleave(address);
+      const proof = await this.getMerkelProof1(hexLeaf, params);
+      console.log(proof);
+      return proof;
+    } catch (e) {
+      console.log(e);
+    }
+  };
 }

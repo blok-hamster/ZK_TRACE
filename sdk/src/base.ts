@@ -46,6 +46,10 @@ export abstract class Base {
     });
   }
 
+  protected getWeb3StorageKey(): string {
+    return this.web3storageApiKey;
+  }
+
   protected async getProvider(): Promise<any> {
     return new ethers.providers.JsonRpcProvider(this.nodeEndpoint);
   }

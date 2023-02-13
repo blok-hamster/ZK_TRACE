@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import {ITraceAgreementFactory} from "./factory/traceAgreementFactory.sol";
+import {ITraceAgreement} from "./traceAgreement.sol";
 
 
 contract TraceHub is AccessControl, ITraceAgreementFactory {
@@ -9,6 +10,7 @@ contract TraceHub is AccessControl, ITraceAgreementFactory {
     event RoleGranted(address indexed hubAdmin);
     event RoleRevoked(address indexed hubAdmin);
     event DeafultAdminChanged(address indexed newDefaultAdmin);
+    event ProposalAccepted(bool indexed accepted);
     struct Agreement {
         address traceAgreementContract;
         uint id;
@@ -19,6 +21,9 @@ contract TraceHub is AccessControl, ITraceAgreementFactory {
 
     mapping(address => mapping(bytes32 => bool)) nullSpent;
     mapping (uint => address ) idToAgreement;
+    mapping (address => bool) supplierApproved;
+    mapping (address => bool) proofGenerated;
+    mapping (bytes32 => bool) nullifierExist;
     Agreement[] agreementLog;
     
     address traceFactory;
@@ -49,6 +54,14 @@ contract TraceHub is AccessControl, ITraceAgreementFactory {
         idToAgreement[id] =  _traceAgreement; 
     }
 
+    function acceptProposal(address traceAddress) external {
+        require(msg.sender == ITraceAgreement(traceAddress).getSupplier(), "not supplier");
+        require(supplierApproved[traceAddress] == false, "Supplier already approved");
+        supplierApproved[traceAddress] = true;
+
+        emit ProposalAccepted(true);
+    }
+
     function addFactory (address _traceFactory) external onlyDefaultAdmin {
     traceFactory = _traceFactory;
     }
@@ -56,6 +69,18 @@ contract TraceHub is AccessControl, ITraceAgreementFactory {
     function updatAgreementUri(address _traceAgreement, string calldata agreementUri) external onlyDefaultAdmin {
         require( _traceAgreement != address(0), "invalid Agreement Address");
         agreementsStore[_traceAgreement].uri = agreementUri;
+    }
+
+    function zkProof(address traceAddress, bytes32 calldata nullifier) external {
+        require(msg.sender == ITraceAgreement(traceAddress).getTraceAdmin(), "un auth: not admin");
+        require(proofGenerated[traceAddress] == false, "ZKP already generated");
+        require(nullifierExist[nullifier] == false, "Nullifier already exist");
+        proofGenerated[traceAddress] = true;
+        nullifierExist[nullifier] = true;
+    }
+
+    function checkNullExist(bytes32 calldata nullifier) external view returns(bool){
+        return nullifierExist[nullifier];
     }
 
     function getAgreementId(address _traceAgreement) public view returns (uint) {
@@ -78,6 +103,10 @@ contract TraceHub is AccessControl, ITraceAgreementFactory {
 
     function getAgreementLog() external view returns (Agreement[] memory) {
         return agreementLog;
+    }
+
+    function checkSupplierApproved(address traceAddress) external view returns(bool){
+        return supplierApproved[traceAddress];
     }
 
     function checkNullifier(address _traceAgreement, bytes32 _nullifier) external view returns (bool, uint) {
@@ -144,4 +173,5 @@ interface ITraceHub {
     function updateNullifier(address _traceAgreement, bytes32 _nullifier) external returns (bool);
     function checkHubAdmin(address hubAdmin) external view returns(bool);
     function checkDeafultAdmin(address addr) external view returns(bool);
+    function checkSupplierApproved(address traceAddress) external view returns(bool);
 }

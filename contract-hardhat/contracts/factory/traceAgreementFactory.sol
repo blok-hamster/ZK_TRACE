@@ -15,7 +15,6 @@ contract TraceAgreementFactory {
     mapping (address => TraceAgreementDetails) traceDetails;
     struct TraceAgreementDetails {
         bytes32 verifierRoot;
-        bytes32 initiatorRoot;
         bytes32[] nullifiers;
         string agreementUri;
         uint agreementId;
@@ -39,11 +38,12 @@ contract TraceAgreementFactory {
         return (_traceAgreement, id);
     }
 
-    function initilizeAgreement(bytes32 _verifierRoot, bytes32 _initiatorRoot, bytes32[] calldata _nullifiers,string calldata agreementUri, address  _traceAgreement) external {
+    function initilizeAgreement(bytes32 _verifierRoot,bytes32[] calldata _nullifiers,string calldata agreementUri, address  _traceAgreement) external {
         require( _traceAgreement != address(0), "invalid Agreement Address");
         require(msg.sender == _traceAgreement, "caller must be trace agreement");
+        require(ITraceHub(traceHub).checkSupplierApproved(_traceAgreement) == true, "supplier has not approved");
         uint id = this.getId(_traceAgreement);
-        TraceAgreementDetails memory _traceDetails = TraceAgreementDetails({verifierRoot: _verifierRoot, initiatorRoot: _initiatorRoot, nullifiers: _nullifiers, agreementUri: agreementUri, agreementId: id});
+        TraceAgreementDetails memory _traceDetails = TraceAgreementDetails({verifierRoot: _verifierRoot,  nullifiers: _nullifiers, agreementUri: agreementUri, agreementId: id});
         traceDetails[_traceAgreement] = _traceDetails;
         ITraceHub(traceHub).updatAgreementLog(_traceAgreement, agreementUri, _nullifiers, id);
     }
