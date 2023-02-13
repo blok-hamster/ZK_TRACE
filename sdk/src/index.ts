@@ -2,8 +2,8 @@ import { Base } from "./base";
 import { TraceProtocol } from "./traceProtocol";
 import { applyMixins } from "./utils";
 
-class ZkTrace extends Base {}
-interface ZkTrace extends TraceProtocol {}
+class ZkTrace extends TraceProtocol {}
+interface ZkTrace {}
 
 applyMixins(ZkTrace, [TraceProtocol]);
 

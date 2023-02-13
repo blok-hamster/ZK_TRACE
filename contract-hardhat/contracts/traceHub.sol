@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import {ITraceAgreementFactory} from "./factory/traceAgreementFactory.sol";
 
 
-contract TraceHub is AccessControl {
+contract TraceHub is AccessControl, ITraceAgreementFactory {
     
     event RoleGranted(address indexed hubAdmin);
     event RoleRevoked(address indexed hubAdmin);
@@ -39,10 +40,10 @@ contract TraceHub is AccessControl {
        _setupRole(HUB_ADMIN, msg.sender);
     }
 
-    function updatAgreementLog(address _traceAgreement, string calldata agreementUri, bytes32[] calldata _nullifiers) external {
+    function updatAgreementLog(address _traceAgreement, string calldata agreementUri, bytes32[] calldata _nullifiers, uint id) external {
         require( _traceAgreement != address(0), "invalid Agreement Address");
         require(msg.sender == traceFactory, "only traceFactory can update agreement log");
-        uint id = agreementLog.length;
+        TraceAgreementDetails memory _details = ITraceAgreementFactory(traceFactory).getAgreementDetais(_traceAgreement);
         Agreement memory _newAgreement = Agreement(_traceAgreement, id, block.timestamp, agreementUri, _nullifiers);
         agreementLog.push(_newAgreement);
         idToAgreement[id] =  _traceAgreement; 

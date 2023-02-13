@@ -3,35 +3,51 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import {ITraceHub} from "./traceHub.sol";
+import {ITraceAgreementFactory} from "./factory/traceAgreementFactory.sol";
 
 
 contract TraceAgreement is Pausable, Ownable {
     
     mapping (string => bytes32) merkelRoots; // holds the verifiers addresses
+    event Verified(uint indexed signCount , bool indexed verified);
+    
     address public traceHub;
+    address traceAdmin;
+    address factoryAddress;
 
     struct Agreement {
         uint agreementId;
         uint createdAt;
     }
+    Agreement agreements;
 
     enum AgreementStatus {Created, Active, Completed, Cancelled}
 
     AgreementStatus public status;
 
-    Agreement agreements;
     uint signCount = 0;
     bool initilized;
+    bool adminAdded;
+
+    function addTraceAdmin(address _traceAdmin, address _factoryAddress, address _traceHub) external {
+        require( adminAdded == false, "Admin already updated");
+        traceAdmin = _traceAdmin;
+        traceHub = _traceHub;
+        factoryAddress = _factoryAddress;
+        status = AgreementStatus.Created;
+        adminAdded = true;
+    }
     
 
-    function initilize(bytes32 _verifierRoot, bytes32 _initiatorRoot, address _traceHub) external {
-        require(!initilize, "already intilized")
+    function initilize(bytes32 _verifierRoot, bytes32 _initiatorRoot, bytes32[] calldata _nullifiers,string calldata agreementUri) external {
+        require(msg.sender == traceAdmin, "Un-auth: Not trace admin");
+        require(!initilize, "already intilized");
+        require(status == AgreementStatus.Created, "Agreement is already active");
+        require(signCount == 0, "Agreement is already active");
         _updateRoot(_verifierRoot, _initiatorRoot);
-        traceHub = _traceHub;
-        status = AgreementStatus.Created;
-        transferOwnership(_traceHub);
+        status = AgreementStatus.Active;
+        ITraceAgreementFactory(factoryAddress).initilizeAgreement( _verifierRoot, _initiatorRoot, _nullifiers,agreementUri, address(this));
         initilized = true;
     }
 
@@ -48,12 +64,6 @@ contract TraceAgreement is Pausable, Ownable {
         agreements.createdAt = block.timestamp;
     }
 
-    function activate() external  {
-        require(status == AgreementStatus.Created, "Agreement is already active");
-        require(signCount == 0, "Agreement is already active");
-        status = AgreementStatus.Active;
-    }
-
     function verifyByOrder(bytes32[] calldata _proof, bytes32 nullifier) public  returns (bool) {
         require(status == AgreementStatus.Active, "Trace Agreement is not active");
         (bool success, uint index) = ITraceHub(traceHub).checkNullifier(address(this), nullifier);
@@ -67,6 +77,7 @@ contract TraceAgreement is Pausable, Ownable {
             ITraceHub(traceHub).updateNullifier(address(this), nullifier);
             signCount++;
             _checkVerificationState();
+            emit Verified(signCount, _verify);
             return _verify;  
         } else {
             require(index == signCount++, "Not the next verifier");
@@ -78,6 +89,7 @@ contract TraceAgreement is Pausable, Ownable {
             ITraceHub(traceHub).updateNullifier(address(this), nullifier);
             signCount++;
              _checkVerificationState();
+             emit Verified(signCount, _verify);
             return _verify;  
         }    
         
@@ -97,6 +109,10 @@ contract TraceAgreement is Pausable, Ownable {
         if(signCount >= ITraceHub(traceHub).checkNullLength(address(this))){
             status = AgreementStatus.Completed;
         } 
+    }
+
+    function getAgreementId() external view returns(uint){
+        return agreements.agreementId;
     }
 
 

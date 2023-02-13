@@ -16,12 +16,22 @@ router
     },
   })
   .post(async (req, res) => {
-    const input = req.body.input;
-    const proof = await generateProof(input);
-    res.status(200).json({
-      message: "Zk proof generated",
-      proof: proof,
-    });
+    try {
+      const input = req.body.input;
+      const proof = await generateProof(input);
+      if (proof.message != "ok") {
+        res.status(400).json({
+          message: "Assertion failed",
+        });
+        return;
+      }
+      res.status(200).json({
+        message: "ok",
+        proof: proof.details,
+      });
+    } catch (e) {
+      console.log(e);
+    }
   });
 
 router
@@ -33,22 +43,20 @@ router
   })
   .post(async (req, res) => {
     const proofDetails = req.body;
-    console.log(proofDetails);
     const zkP = proofDetails.proofBuffer;
     const vk = proofDetails.verifierKeyBuffer;
-
-    // console.log("proof", zkP);
-    // console.log("vk", vk);
 
     const proof = JSON.parse(zkP);
     const verifierKey = JSON.parse(vk);
 
     const isVerified = await verifyProof(proof, verifierKey);
-    if (isVerified) {
-      res.status(200).json({ message: "Proof Verified", verified: 1 });
-    } else {
-      res.json({ message: "invalid Proof Provided", verified: 0 });
+    if (!isVerified) {
+      res
+        .status(200)
+        .json({ message: "invalid Proof Provided", verified: isVerified });
+      return;
     }
+    res.status(200).json({ message: "ok", verified: isVerified });
   });
 
 const from = "../circuit";
@@ -104,20 +112,18 @@ const exportVerifier = async (verifyKey) => {
   }
 };
 
+/**
+ * @params params is always an array of strings
+ */
+
 // @ts-ignore
 const generateProof = async (params) => {
   try {
     const zokratesProvider = await getZokrateProvider();
     const artifacts = await getArtifacts();
 
-    /**
-     * @params is always an array of strings
-     */
     // @ts-ignore
-    const { witness, output } = zokratesProvider.computeWitness(
-      artifacts,
-      params
-    );
+    const { witness } = zokratesProvider.computeWitness(artifacts, params);
 
     /**
      * @dev this runs the setup ceremoney for the prover and verifier keys
@@ -137,17 +143,17 @@ const generateProof = async (params) => {
 
     const proofBuffer = JSON.stringify(proof);
     const verifierKeyBuffer = JSON.stringify(vefierKey);
-
-    //exportVerifier(vefierKey);
-
-    console.log(`Verifier Key:${verifierKeyBuffer}`, `Proof :${proofBuffer}`);
-
-    return { proofBuffer, verifierKeyBuffer };
+    //console.log(`Verifier Key:${verifierKeyBuffer}`, `Proof :${proofBuffer}`);
+    return {
+      message: "ok",
+      details: { proofBuffer, verifierKeyBuffer },
+    };
   } catch (error) {
     console.log(error);
+    return {
+      message: error,
+    };
   }
 };
-
-// verifyProof();
 
 export default router;

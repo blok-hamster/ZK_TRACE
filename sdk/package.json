@@ -3,12 +3,17 @@
   "version": "1.0.0",
   "description": "Sdk for integrating ZK trace into supplychain managment systems",
   "main": "dist/index.js",
-  "module": "dist/index.m.js",
+  "module": "dist/index.module.js",
   "unpkg": "dist/index.umd.js",
-  "types": "dist/index.d.ts",
+  "types": "module",
+  "exports": "./dist/index.modern.mjs",
   "scripts": {
     "build": "rm -rf dist && microbundle --tsconfig tsconfig.json --no-sourcemap"
   },
+  "browserslist": [
+    "defaults and supports es6-module",
+    "maintained node versions"
+  ],
   "keywords": [
     "zk-trace",
     "supplychain"
@@ -19,10 +24,13 @@
     "dist"
   ],
   "devDependencies": {
-    "microbundle": "^0.15.1"
+    "microbundle": "^0.15.1",
+    "rollup-plugin-polyfill-node": "^0.12.0"
   },
   "dependencies": {
     "ethers": "^5.7.2",
-    "isomorphic-unfetch": "^4.0.2"
+    "isomorphic-unfetch": "^4.0.2",
+    "seedrandom": "^3.0.5",
+    "zokrates-js": "^1.1.5"
   }
 }

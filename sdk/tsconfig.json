@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "CommonJS",
     "declaration": true,
     "removeComments": true,
     "allowSyntheticDefaultImports": true,
@@ -9,6 +9,7 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "incremental": true,
+    "moduleResolution": "node",
     "resolveJsonModule": true
   },
   "include": ["src/**/*"],
