@@ -1,4 +1,3 @@
-import { Base } from "./base";
 import { TraceProtocol } from "./traceProtocol";
 import { applyMixins } from "./utils";
 

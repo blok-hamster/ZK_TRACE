@@ -70,16 +70,24 @@ export class Zk extends Storage {
     try {
       const abi = ethers.utils.defaultAbiCoder;
       const provider = await this.getProvider();
-      const timeStamp: any = Math.round(new Date().getTime() / 1000).toString();
+      const timeStamp: any = parseInt(
+        Math.round(new Date().getTime() / 1000).toString()
+      );
       const params: Array<string> = await this.randomNumber(salt);
       const saltedNull = await this.getNullifier(salt);
       const zokratesProvider = await this.getZokrateProvider();
       const source = await this.getSource(this.rootFromPath, this.rootToPath);
       const artifacts = await this.getArtifacts(source);
       const preImage = await this.getPreImage(params);
-
-      const nullHx: number = saltedNull * provider.getBlockNumber() + timeStamp;
-      const nullifier = keccak256(abi.encode(["uint"], [nullHx]));
+      const blockNumber = await provider.getBlockNumber();
+      const nullifier = this.buff2Hex(
+        keccak256(
+          abi.encode(
+            ["uint", "uint", "uint", "string"],
+            [saltedNull, timeStamp, blockNumber, salt]
+          )
+        )
+      );
 
       const input = [...params, ...preImage];
       const { witness } = zokratesProvider.computeWitness(artifacts, input);

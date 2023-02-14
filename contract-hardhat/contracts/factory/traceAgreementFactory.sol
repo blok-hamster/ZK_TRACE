@@ -26,11 +26,11 @@ contract TraceAgreementFactory {
         traceAgreementImplementation = _traceAgreementImplementation;
     }
     
-    function newTraceAgreement( address traceAdmin) external {
+    function newTraceAgreement( address traceAdmin, address _supplier) external returns (address, uint) {
         uint id = agreementId;
         bytes32 salt = keccak256(abi.encodePacked(id, block.number, block.timestamp));
         address payable _traceAgreement = payable(Clones.cloneDeterministic(traceAgreementImplementation, salt));
-        TraceAgreement(_traceAgreement).addTraceAdmin(_traceAdmin, address(this), traceHub);
+        TraceAgreement(_traceAgreement).addTraceAdmin(traceAdmin, _supplier, address(this), traceHub);
         idToAddress[agreementId] = _traceAgreement;
         ids[_traceAgreement] = agreementId;
         agreementId++;
@@ -53,7 +53,7 @@ contract TraceAgreementFactory {
     }
 
     function getId(address agreementAddress) external view returns(uint){
-        return ids[agreement];
+        return ids[agreementAddress];
     }
 
     function getFactoryAddress() external view returns (address){
@@ -68,12 +68,11 @@ contract TraceAgreementFactory {
 interface ITraceAgreementFactory{
         struct TraceAgreementDetails {
         bytes32 verifierRoot;
-        bytes32 initiatorRoot;
         bytes32[] nullifiers;
         string agreementUri;
         uint agreementId;
     }
-    function initilizeAgreement(bytes32 _verifierRoot, bytes32 _initiatorRoot, bytes32[] calldata _nullifiers,string calldata agreementUri, uint _agreementId) external;
+     function initilizeAgreement(bytes32 _verifierRoot,bytes32[] calldata _nullifiers,string calldata agreementUri, address  _traceAgreement) external;
     function getAgreementDetais(address agreementAddress) external view returns(TraceAgreementDetails memory);
     function getId(address agreementAddress) external view returns(uint);
 }

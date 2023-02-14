@@ -3,18 +3,35 @@ export declare type NewTraceData = {
     nullifiers: Array<string>;
     agreementUri: string;
 };
-export declare type Data = {
-    traceAddress: string;
-    verifiersRoot: string;
-    verifiers: Array<string>;
-    txDetails: object;
-    previousBlockCid: string;
-};
 export declare type verifierDetails = {
     message: string;
     details: {
         verifiersRoot: string;
         nullifiers: Array<string>;
-        argumentUri: string;
+    };
+};
+export declare type CreateProofReturn = {
+    proofBuffer: string;
+    verifierKeyBuffer: string;
+    nullifier: string;
+};
+export declare type TraceVerfierReturn = {
+    message: string;
+    details: {
+        verifiedCount: number;
+        verified: boolean;
+    };
+};
+export declare type InitializeAgreementReturn = {
+    message: string;
+    transactionHash: string;
+    verificationDetails: Array<object>;
+};
+export declare type CreateAgreementReturn = {
+    message: string;
+    transactionHash: string;
+    details: {
+        agreementAddress: string;
+        agreementId: number;
     };
 };

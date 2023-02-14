@@ -7,6 +7,7 @@ type Config = {
   baseUri?: string;
   web3storageApiKey?: string;
   factoryAddress?: string;
+  traceHubAddress?: string;
 };
 
 export abstract class Base {
@@ -15,14 +16,17 @@ export abstract class Base {
   private factoryAddress: string;
   private apikey: string;
   private baseUrl: string;
+  private traceHubAddress: string;
 
   constructor(config: Config) {
-    this.nodeEndpoint =
-      config.nodeEndpoint || `https://api.hyperspace.node.glif.io/rpc/v1`;
+    this.nodeEndpoint = config.nodeEndpoint || `http://127.0.0.1:8545`;
     this.baseUrl = config.baseUri || `http://localhost:5000/`;
     this.apikey = config.apikey;
     this.web3storageApiKey = config.web3storageApiKey;
-    this.factoryAddress = config.factoryAddress || "l3j4kjenwone";
+    this.factoryAddress =
+      config.factoryAddress || "0x610178da211fef7d417bc0e6fed39f05609ad788";
+    this.traceHubAddress =
+      config.traceHubAddress || "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318";
   }
 
   protected invoke<T>(endpoint: string, options?: RequestInit): Promise<any> {
@@ -56,5 +60,9 @@ export abstract class Base {
 
   protected getFactoryAddress(): string {
     return this.factoryAddress;
+  }
+
+  protected getTraceHubAddress(): string {
+    return this.traceHubAddress;
   }
 }

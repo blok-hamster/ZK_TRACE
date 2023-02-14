@@ -4,7 +4,7 @@ import { Data, CarData, CreateCarReturn, IpfsReturn } from "./types";
 import { Web3Storage, File } from "web3.storage";
 import { CarReader } from "@ipld/car/reader";
 import * as fs from "fs";
-import { Readable } from "stream";
+import { Readable } from "readable-stream";
 import * as Block from "multiformats/block";
 import { sha256 } from "multiformats/hashes/sha2";
 import * as raw from "multiformats/codecs/raw";
@@ -67,7 +67,7 @@ export class Storage extends Base {
   /// Helpers
 
   private initilizeWeb3Storage = async () => {
-    const storage = new Web3Storage({ token: this.getWeb3StorageKey() });
+    const storage = new Web3Storage({ token: await this.getWeb3StorageKey() });
     return storage;
   };
 
@@ -232,7 +232,7 @@ export class Storage extends Base {
   };
 
   ///MERKEL TREE HANDLER
-  buff2Hex = (x: any) => "0x" + x.toString("hex");
+  public buff2Hex = (x: any) => "0x" + x.toString("hex");
 
   // @ts-ignore
   getMerkelTree = async (params: Array<string>) => {

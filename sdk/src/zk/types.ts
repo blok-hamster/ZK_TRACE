@@ -8,6 +8,6 @@ export declare type GenerateProofReturn = {
   details: {
     proofBuffer: string;
     verifierKeyBuffer: string;
-    nullifier: any;
+    nullifier: string;
   };
 };

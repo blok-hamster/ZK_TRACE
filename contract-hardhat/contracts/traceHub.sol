@@ -5,7 +5,7 @@ import {ITraceAgreementFactory} from "./factory/traceAgreementFactory.sol";
 import {ITraceAgreement} from "./traceAgreement.sol";
 
 
-contract TraceHub is AccessControl, ITraceAgreementFactory {
+contract TraceHub is AccessControl {
     
     event RoleGranted(address indexed hubAdmin);
     event RoleRevoked(address indexed hubAdmin);
@@ -20,7 +20,7 @@ contract TraceHub is AccessControl, ITraceAgreementFactory {
     }
 
     mapping(address => mapping(bytes32 => bool)) nullSpent;
-    mapping (uint => address ) idToAgreement;
+    mapping (uint => address) idToAgreement;
     mapping (address => bool) supplierApproved;
     mapping (address => bool) proofGenerated;
     mapping (bytes32 => bool) nullifierExist;
@@ -40,15 +40,14 @@ contract TraceHub is AccessControl, ITraceAgreementFactory {
      */
     mapping(address =>  Agreement) agreementsStore;
 
-    constructor(){
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-       _setupRole(HUB_ADMIN, msg.sender);
+    constructor(address hubAdmin){
+        _setupRole(DEFAULT_ADMIN_ROLE, hubAdmin);
+       _setupRole(HUB_ADMIN, hubAdmin);
     }
 
     function updatAgreementLog(address _traceAgreement, string calldata agreementUri, bytes32[] calldata _nullifiers, uint id) external {
         require( _traceAgreement != address(0), "invalid Agreement Address");
         require(msg.sender == traceFactory, "only traceFactory can update agreement log");
-        TraceAgreementDetails memory _details = ITraceAgreementFactory(traceFactory).getAgreementDetais(_traceAgreement);
         Agreement memory _newAgreement = Agreement(_traceAgreement, id, block.timestamp, agreementUri, _nullifiers);
         agreementLog.push(_newAgreement);
         idToAgreement[id] =  _traceAgreement; 
@@ -58,12 +57,11 @@ contract TraceHub is AccessControl, ITraceAgreementFactory {
         require(msg.sender == ITraceAgreement(traceAddress).getSupplier(), "not supplier");
         require(supplierApproved[traceAddress] == false, "Supplier already approved");
         supplierApproved[traceAddress] = true;
-
         emit ProposalAccepted(true);
     }
 
     function addFactory (address _traceFactory) external onlyDefaultAdmin {
-    traceFactory = _traceFactory;
+        traceFactory = _traceFactory;
     }
 
     function updatAgreementUri(address _traceAgreement, string calldata agreementUri) external onlyDefaultAdmin {
@@ -71,7 +69,7 @@ contract TraceHub is AccessControl, ITraceAgreementFactory {
         agreementsStore[_traceAgreement].uri = agreementUri;
     }
 
-    function zkProof(address traceAddress, bytes32 calldata nullifier) external {
+    function zkProof(address traceAddress, bytes32 nullifier) external {
         require(msg.sender == ITraceAgreement(traceAddress).getTraceAdmin(), "un auth: not admin");
         require(proofGenerated[traceAddress] == false, "ZKP already generated");
         require(nullifierExist[nullifier] == false, "Nullifier already exist");
@@ -81,11 +79,12 @@ contract TraceHub is AccessControl, ITraceAgreementFactory {
 
     function initiateAgreement(address traceAddress, bytes32 nullifier) external {
         require(msg.sender == ITraceAgreement(traceAddress).getTraceAdmin(), "un auth: not admin");
+        require(this.checkNullExist(nullifier) == true, "Invalid Nullifier");
         bool success = ITraceAgreement(traceAddress).activate();
         require(success);
     }
 
-    function checkNullExist(bytes32 calldata nullifier) external view returns(bool){
+    function checkNullExist(bytes32 nullifier) external view returns(bool){
         return nullifierExist[nullifier];
     }
 
@@ -153,10 +152,9 @@ contract TraceHub is AccessControl, ITraceAgreementFactory {
         
         if (nullSpent[_traceAgreement][_nullifier] == false) {
             nullSpent[_traceAgreement][_nullifier] = true;
-            return true;
-        } else {
-            revert("Invalid Nullifier");
-        }
+        } 
+
+        return true;
     }
 
     function checkHubAdmin(address hubAdmin) public view returns(bool){
@@ -170,7 +168,7 @@ contract TraceHub is AccessControl, ITraceAgreementFactory {
 }
 
 interface ITraceHub {
-    function updatAgreementLog(address _traceAgreement, string calldata agreementUri, bytes32[] calldata _nullifiers) external;
+    function updatAgreementLog(address _traceAgreement, string calldata agreementUri, bytes32[] calldata _nullifiers, uint id) external;
     function getAgreementId(address _traceAgreement) external view returns (uint);
     function getTraceAddress(uint id) external view returns(address);
     function getAgreementDetails(address traceAgreement) external view returns (address, uint, uint );
@@ -180,5 +178,5 @@ interface ITraceHub {
     function checkHubAdmin(address hubAdmin) external view returns(bool);
     function checkDeafultAdmin(address addr) external view returns(bool);
     function checkSupplierApproved(address traceAddress) external view returns(bool);
-    function checkNullExist(bytes32 calldata nullifier) external view returns(bool);
+    function checkNullExist(bytes32 nullifier) external view returns(bool);
 }

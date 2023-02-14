@@ -2,12 +2,11 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
 import {ITraceHub} from "./traceHub.sol";
 import {ITraceAgreementFactory} from "./factory/traceAgreementFactory.sol";
 
 
-contract TraceAgreement is Pausable, Ownable {
+contract TraceAgreement {
     
     mapping (string => bytes32) merkelRoots; // holds the verifiers addresses
     event Verified(uint indexed signCount , bool indexed verified);
@@ -44,7 +43,7 @@ contract TraceAgreement is Pausable, Ownable {
 
     function initilize(bytes32 _verifierRoot, bytes32[] calldata _nullifiers,string calldata agreementUri) external {
         require(msg.sender == traceAdmin, "Un-auth: Not trace admin");
-        require(!initilize, "already intilized");
+        require(!initilized, "already intilized");
         require(status == AgreementStatus.Created, "Agreement is already active");
         require(signCount == 0, "Agreement is already active");
         _updateRoot(_verifierRoot);
@@ -62,11 +61,12 @@ contract TraceAgreement is Pausable, Ownable {
     }
 
     function verifyByOrder(bytes32[] calldata _proof, bytes32 nullifier) public  returns (bool) {
+        bool verify;
         require(status == AgreementStatus.Active, "Trace Agreement is not active");
-        (bool success, uint index) = ITraceHub(traceHub).checkNullifier(address(this), nullifier);
+        (bool spent, uint index) = ITraceHub(traceHub).checkNullifier(address(this), nullifier);
         if(index == 0) {
            require(signCount == 0, "Not the first verifier");
-           require(success == false);
+           require(spent == false);
             (bool _verify) = verifierSign(_proof, msg.sender);
             if(!_verify){
                 revert("Not verifier");
@@ -74,11 +74,10 @@ contract TraceAgreement is Pausable, Ownable {
             ITraceHub(traceHub).updateNullifier(address(this), nullifier);
             signCount++;
             _checkVerificationState();
-            emit Verified(signCount, _verify);
-            return _verify;  
+            verify = _verify;  
         } else {
-            require(index == signCount++, "Not the next verifier");
-            require(success == false);
+            require(index == signCount, "Not the next verifier");
+            require(spent == false);
             (bool _verify) = verifierSign(_proof, msg.sender);
             if(!_verify){
                 revert("Not verifier");
@@ -87,9 +86,10 @@ contract TraceAgreement is Pausable, Ownable {
             signCount++;
              _checkVerificationState();
              emit Verified(signCount, _verify);
-            return _verify;  
-        }    
-        
+            verify = _verify;  
+        } 
+        emit Verified(signCount, verify);  
+        return verify;
     }
 
     function verifierSign(bytes32[] calldata _proof, address addr) internal view returns (bool) {
@@ -101,6 +101,7 @@ contract TraceAgreement is Pausable, Ownable {
     function activate() external returns(bool){
     require (msg.sender  == traceHub, "only trace hub can activate agreement");
       status = AgreementStatus.Active;
+      return true;
     }
 
     function checkState() public view returns(uint){
@@ -124,16 +125,6 @@ contract TraceAgreement is Pausable, Ownable {
     function getTraceAdmin() external view returns(address){
         return traceAdmin;
     }
-
-
-    function pause() public onlyOwner {
-        _pause();
-    }
-
-    function unpause() public onlyOwner {
-        _unpause();
-    }
-
 }
 
 interface ITraceAgreement {

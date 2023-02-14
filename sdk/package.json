@@ -28,23 +28,27 @@
     "rollup-plugin-polyfill-node": "^0.12.0"
   },
   "dependencies": {
-    "ethers": "^5.7.2",
-    "isomorphic-unfetch": "^4.0.2",
-    "seedrandom": "^3.0.5",
-    "zokrates-js": "^1.1.5",
     "@ipld/car": "^4.1.5",
     "@ipld/dag-cbor": "^7.0.0",
     "@ipld/dag-json": "^8.0.1",
+    "@types/path-browserify": "^1.0.0",
     "aws-sdk": "^2.1268.0",
     "axios": "^1.2.1",
+    "browserify-fs": "^1.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.2",
+    "ethers": "^5.7.2",
     "express": "^4.18.1",
     "ipfs": "^0.64.0",
     "ipfs-unixfs-importer": "^10.0.2",
+    "isomorphic-unfetch": "^4.0.2",
     "keccak256": "^1.0.6",
     "merkletreejs": "^0.2.32",
     "multiformats": "^9.4.3",
-    "web3.storage": "^4.4.0"
+    "path-browserify": "^1.0.1",
+    "readable-stream": "^4.3.0",
+    "seedrandom": "^3.0.5",
+    "web3.storage": "^4.4.0",
+    "zokrates-js": "^1.1.5"
   }
 }
