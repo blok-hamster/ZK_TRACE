@@ -1,16 +1,18 @@
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from "fs";
 import { resolve, dirname } from "path";
 import { initialize } from "zokrates-js";
+import keccak256 from "keccak256";
+import { ethers } from "ethers";
 import seedRandom from "seedrandom";
 
-import { Proof } from "./types";
+import { Proof, GenerateProofReturn } from "./types";
 import { Storage } from "src/storage";
 
 export class Zk extends Storage {
   rootFromPath: string = "../circuit";
   rootToPath: string = "sdk/circuit/root.zok";
 
-  private async randomNumber(salt: String): Promise<any> {
+  private async randomNumber(salt: String): Promise<Array<string>> {
     let randN: Array<string> = [];
     for (let i = 0; i < 4; i++) {
       const prng = seedRandom(salt, { entropy: true });
@@ -19,7 +21,7 @@ export class Zk extends Storage {
     return randN;
   }
 
-  public async getNullifier(salt: String): Promise<any> {
+  public async getNullifier(salt: String): Promise<number> {
     const prng = seedRandom(salt, { entropy: false });
     return Math.abs(prng.int32());
   }
@@ -49,7 +51,7 @@ export class Zk extends Storage {
     return artifacts;
   }
 
-  private async getPreImage(params: Array<string>): Promise<any> {
+  private async getPreImage(params: Array<string>): Promise<Array<string>> {
     try {
       const zokratesProvider = await this.getZokrateProvider();
       const source = await this.getSource(
@@ -64,16 +66,24 @@ export class Zk extends Storage {
     }
   }
 
-  public async generateZkProof(salt: string): Promise<object> {
+  public async generateZkProof(salt: string): Promise<GenerateProofReturn> {
     try {
+      const abi = ethers.utils.defaultAbiCoder;
+      const provider = await this.getProvider();
+      const timeStamp: any = Math.round(new Date().getTime() / 1000).toString();
       const params: Array<string> = await this.randomNumber(salt);
+      const saltedNull = await this.getNullifier(salt);
       const zokratesProvider = await this.getZokrateProvider();
       const source = await this.getSource(this.rootFromPath, this.rootToPath);
       const artifacts = await this.getArtifacts(source);
       const preImage = await this.getPreImage(params);
 
+      const nullHx: number = saltedNull * provider.getBlockNumber() + timeStamp;
+      const nullifier = keccak256(abi.encode(["uint"], [nullHx]));
+
       const input = [...params, ...preImage];
       const { witness } = zokratesProvider.computeWitness(artifacts, input);
+
       /**
        * @dev this runs the setup ceremoney for the prover and verifier keys
        */
@@ -91,17 +101,14 @@ export class Zk extends Storage {
       const verifierKeyBuffer = JSON.stringify(vefierKey);
       return {
         message: "ok",
-        details: { proofBuffer, verifierKeyBuffer },
+        details: { proofBuffer, verifierKeyBuffer, nullifier },
       };
-    } catch (error) {
-      console.log(error);
-      return {
-        message: error,
-      };
+    } catch (e) {
+      throw new Error(e);
     }
   }
 
-  public async verifyZkProof(proofObj: Proof): Promise<object> {
+  public async verifyZkProof(proofObj: any): Promise<any> {
     const zkP = proofObj.proofBuffer;
     const vk = proofObj.verifierKeyBuffer;
     const proof = JSON.parse(zkP);
@@ -119,9 +126,8 @@ export class Zk extends Storage {
         message: "Ok",
         isVerified,
       };
-    } catch (error) {
-      console.log(error);
-      return { message: error };
+    } catch (e) {
+      throw new Error(e);
     }
   }
 

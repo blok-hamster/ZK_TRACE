@@ -16,6 +16,8 @@ import keccak256 from "keccak256";
 import axios from "axios";
 
 export class Storage extends Base {
+  //RestApi Methods
+
   public async readCid(cid: string): Promise<Data> {
     return this.invoke(`storage/readData/${cid}`);
   }
@@ -79,10 +81,9 @@ export class Storage extends Base {
         name: `${traceAddress}.car`,
         decoders: [dagCBOR],
       });
-      console.log(`IPFS CID: ${cid}`);
       return cid;
     } catch (e) {
-      console.log(e);
+      throw new Error(e);
     }
   };
 
@@ -95,12 +96,12 @@ export class Storage extends Base {
           data = result.data.data;
         })
         .catch((err) => {
-          console.log(err);
+          throw new Error(err);
         });
 
       return data;
     } catch (e) {
-      console.log(e);
+      throw new Error(e);
     }
   };
 
@@ -120,12 +121,9 @@ export class Storage extends Base {
         codec: dagCBOR,
       });
       blocks.push(dataLeaf);
-
-      console.log(blocks);
-      console.log(dataLeaf.cid);
       return { blocks, roots: [dataLeaf.cid] };
     } catch (e) {
-      console.log(e);
+      throw new Error(e);
     }
   };
 
@@ -149,12 +147,13 @@ export class Storage extends Base {
       }
       return out;
     } catch (e) {
-      console.log(e);
+      throw new Error(e);
     }
   };
 
   // @ts-ignore
-  private read = async (traceAddress: string) => {
+  public readCar = async (path: string) => {
+    //`./cars/${traceAddress}.car`
     const codecs = {
       [raw.code]: raw,
       [dagJSON.code]: dagJSON,
@@ -166,7 +165,7 @@ export class Storage extends Base {
     };
 
     try {
-      const instream = fs.createReadStream(`./cars/${traceAddress}.car`);
+      const instream = fs.createReadStream(path);
       const reader = await CarReader.fromIterable(instream);
 
       const roots = await reader.getRoots();
@@ -191,16 +190,10 @@ export class Storage extends Base {
         const newData = JSON.parse(JSON.stringify(res.data));
         data = newData;
         blockCid = cid.toString();
-
-        console.log(
-          `Previous Block CID: ${
-            newData.previousBlockCid
-          }, New Block CID: ${cid.toString()}`
-        );
       }
       return { blockCid, data };
     } catch (e) {
-      console.log(e);
+      throw new Error(e);
     }
   };
 
@@ -210,19 +203,17 @@ export class Storage extends Base {
     return newData;
   };
 
-  updateCar1 = async (data: any, traceAddress: string) => {
+  updateCar1 = async (data: any, traceAddress: string, blockCid: string) => {
     let cid: string;
     try {
-      const { blockCid } = await this.read(traceAddress);
       const newData = this.updatPreviousBlockCid(data, blockCid);
       const { blocks, roots } = await this.createBlock(newData);
       await this.write(roots, blocks, traceAddress);
       cid = await this.uploadCarToIPFS(traceAddress);
+      return cid;
     } catch (e) {
-      console.log(e);
+      throw new Error(e);
     }
-    console.log(`Car Packed at: cars/${traceAddress}.car , CID: ${cid}`);
-    return cid;
   };
 
   public writeCar = async (data: any, traceAddress: string) => {
@@ -231,16 +222,12 @@ export class Storage extends Base {
       const { blocks, roots } = await this.createBlock(data);
       await this.write(roots, blocks, traceAddress);
       cid = await this.uploadCarToIPFS(traceAddress);
-      console.log(`Car Packed at: cars/${traceAddress}.car`);
       return {
         message: "ok",
         cid: cid,
       };
     } catch (e) {
-      console.log(e);
-      return {
-        message: e,
-      };
+      throw new Error(e);
     }
   };
 
@@ -256,7 +243,7 @@ export class Storage extends Base {
       const root = this.buff2Hex(tree.getRoot());
       return { tree, root };
     } catch (e) {
-      console.log(e);
+      throw new Error(e);
     }
   };
 
@@ -273,7 +260,7 @@ export class Storage extends Base {
       const proof = tree.getProof(leaf).map((item) => this.buff2Hex(item.data));
       return proof;
     } catch (e) {
-      console.log(e);
+      throw new Error(e);
     }
   }
 
@@ -285,10 +272,9 @@ export class Storage extends Base {
     try {
       const hexLeaf = this.getleave(address);
       const proof = await this.getMerkelProof1(hexLeaf, params);
-      console.log(proof);
       return proof;
     } catch (e) {
-      console.log(e);
+      throw new Error(e);
     }
   };
 }

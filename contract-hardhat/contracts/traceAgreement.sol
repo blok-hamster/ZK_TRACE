@@ -48,7 +48,6 @@ contract TraceAgreement is Pausable, Ownable {
         require(status == AgreementStatus.Created, "Agreement is already active");
         require(signCount == 0, "Agreement is already active");
         _updateRoot(_verifierRoot);
-        status = AgreementStatus.Active;
          initilized = true;
         ITraceAgreementFactory(factoryAddress).initilizeAgreement( _verifierRoot, _nullifiers,agreementUri, address(this));
     }
@@ -99,6 +98,11 @@ contract TraceAgreement is Pausable, Ownable {
         return MerkleProof.verify(_proof, root, leaf);
     }
 
+    function activate() external returns(bool){
+    require (msg.sender  == traceHub, "only trace hub can activate agreement");
+      status = AgreementStatus.Active;
+    }
+
     function checkState() public view returns(uint){
         return uint(status);
     }
@@ -137,4 +141,5 @@ interface ITraceAgreement {
     function updateRoot(bytes32 verifierRoot, bytes32 initiatorRoot) external;
     function verifyByOrder(bytes32[] calldata _proof, bytes32 nullifier) external view returns (bool);
     function getTraceAdmin() external view returns(address);
+    function activate() external returns(bool);
 }

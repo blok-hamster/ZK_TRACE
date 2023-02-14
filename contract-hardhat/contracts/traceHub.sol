@@ -79,6 +79,12 @@ contract TraceHub is AccessControl, ITraceAgreementFactory {
         nullifierExist[nullifier] = true;
     }
 
+    function initiateAgreement(address traceAddress, bytes32 nullifier) external {
+        require(msg.sender == ITraceAgreement(traceAddress).getTraceAdmin(), "un auth: not admin");
+        bool success = ITraceAgreement(traceAddress).activate();
+        require(success);
+    }
+
     function checkNullExist(bytes32 calldata nullifier) external view returns(bool){
         return nullifierExist[nullifier];
     }
@@ -174,4 +180,5 @@ interface ITraceHub {
     function checkHubAdmin(address hubAdmin) external view returns(bool);
     function checkDeafultAdmin(address addr) external view returns(bool);
     function checkSupplierApproved(address traceAddress) external view returns(bool);
+    function checkNullExist(bytes32 calldata nullifier) external view returns(bool);
 }

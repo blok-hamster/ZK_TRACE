@@ -79,9 +79,9 @@ const getRand = async () => {
   console.log(await rnd);
 };
 
-//main();
+main();
 
-createCar();
+//createCar();
 
 //readCarData();
 

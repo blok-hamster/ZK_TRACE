@@ -1,5 +1,11 @@
 import { Zk } from "src/zk";
-import { verifierDetails } from "./types";
+import {
+  verifierDetails,
+  CreateProofReturn,
+  TraceVerfierReturn,
+  InitializeAgreementReturn,
+  CreateAgreementReturn,
+} from "./types";
 import { traceFactoryAbi, traceHubAbi, traceAgreementAbi } from "./abi/index";
 import keccak256 from "keccak256";
 import { ethers } from "ethers";
@@ -8,7 +14,7 @@ export class TraceProtocol extends Zk {
   public async createTraceAgreement(
     adminAddress: string,
     signer: any
-  ): Promise<any> {
+  ): Promise<CreateAgreementReturn> {
     try {
       const provider = await this.getProvider();
       const traceFactory = new ethers.Contract(
@@ -44,10 +50,7 @@ export class TraceProtocol extends Zk {
         },
       };
     } catch (e) {
-      console.log(e);
-      return {
-        message: e,
-      };
+      throw new Error(e);
     }
   }
 
@@ -56,7 +59,7 @@ export class TraceProtocol extends Zk {
     traceAddress: string,
     txDetails: object,
     signer: any
-  ): Promise<any> {
+  ): Promise<InitializeAgreementReturn> {
     try {
       const verifierDetails: Array<object> = [];
       const provider = await this.getProvider();
@@ -109,10 +112,7 @@ export class TraceProtocol extends Zk {
         verificationDetails: verifierDetails,
       };
     } catch (e) {
-      console.log(e);
-      return {
-        message: e,
-      };
+      throw new Error(e);
     }
   }
 
@@ -121,7 +121,7 @@ export class TraceProtocol extends Zk {
     proof: Array<string>,
     nullifier: string,
     signer: any
-  ): Promise<any> {
+  ): Promise<TraceVerfierReturn> {
     try {
       const provider = await this.getProvider();
       const traceAgreement = new ethers.Contract(
@@ -155,10 +155,7 @@ export class TraceProtocol extends Zk {
         },
       };
     } catch (e) {
-      console.log(e);
-      return {
-        message: e,
-      };
+      throw new Error(e);
     }
   }
 
@@ -166,28 +163,86 @@ export class TraceProtocol extends Zk {
     traceAddress: string,
     traceHubAddress: string,
     signer: any
-  ): Promise<object> {
-    const proof = await this.generateZkProof(traceAddress);
-    const provider = await this.getProvider();
+  ): Promise<CreateProofReturn> {
+    try {
+      const provider = await this.getProvider();
+      const proof = await this.generateZkProof(traceAddress);
 
-    const traceHub = new ethers.Contract(
-      traceHubAddress,
-      traceHubAbi,
-      provider
-    );
+      const traceHub = new ethers.Contract(
+        traceHubAddress,
+        traceHubAbi,
+        signer
+      );
 
-    const traceAgreement = new ethers.Contract(
-      traceAddress,
-      traceAgreementAbi,
-      signer
-    );
+      const approved = await traceHub.checkSupplierApproved(traceAddress);
+      if (!approved) {
+        throw new Error("Supplier has not approved");
+      }
+      const tx = await traceHub.zkProof(traceAddress, proof.details.nullifier, {
+        gasLimit: 21000,
+        maxFeePerGas: provider.getGasPrice(),
+        maxPriorityFeePerGas: provider.getGasPrice(),
+      });
 
-    const approved = await traceHub.checkSupplierApproved(traceAddress);
-    if (!approved) {
-      throw new Error("Supplier has not approved");
+      const receipt = await tx.wait();
+      if (receipt.status != 1) {
+        throw new Error("verification failed");
+      }
+
+      return proof.details;
+    } catch (e) {
+      throw new Error(e);
     }
+  }
 
-    const zkProof = await this.generateZkProof(traceAddress);
+  public async activateTraceAgreement(
+    traceAddress: string,
+    traceHubAddress: string,
+    proof: any,
+    signer: any
+  ): Promise<any> {
+    try {
+      const provider = await this.getProvider();
+      const traceHub = new ethers.Contract(
+        traceHubAddress,
+        traceHubAbi,
+        signer
+      );
+      let nullExist = await traceHub.checkNullExist(proof.nullifier);
+
+      if (!nullExist) {
+        throw new Error("Invalid Nullifier");
+      }
+      const zkProof = await this.verifyZkProof({
+        proofBuffer: proof.proofBuffer,
+        verifierKeyBuffer: proof.proofBuffer,
+      });
+
+      if (zkProof.message != "ok") {
+        throw new Error("Invalid ZK Proof Provided");
+      }
+
+      const tx = await traceHub.initiateAgreement(
+        traceAddress,
+        proof.nullifier,
+        {
+          gasLimit: 210000,
+          maxFeePerGas: provider.getGasPrice(),
+          maxPriorityFeePerGas: provider.getGasPrice(),
+        }
+      );
+
+      const receipt = await tx.wait();
+      if (receipt.status != 1) {
+        throw new Error("failed to initiate");
+      }
+
+      return {
+        message: "ok",
+      };
+    } catch (e) {
+      throw new Error(e);
+    }
   }
 
   private async getVerifiersDetails(
@@ -214,7 +269,7 @@ export class TraceProtocol extends Zk {
         },
       };
     } catch (e) {
-      console.log(e);
+      throw new Error(e);
     }
   }
 }
