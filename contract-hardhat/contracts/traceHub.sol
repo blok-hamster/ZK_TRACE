@@ -114,8 +114,8 @@ contract TraceHub is AccessControl {
         return supplierApproved[traceAddress];
     }
 
-    function checkNullifier(address _traceAgreement, bytes32 _nullifier) external view returns (bool spent) {
-        spent =  nullSpent[_traceAgreement][_nullifier];
+    function checkNullifier(address _traceAgreement, bytes32 _nullifier) external view returns (bool) {
+        bool spent =  nullSpent[_traceAgreement][_nullifier];
         return spent;
     }
 

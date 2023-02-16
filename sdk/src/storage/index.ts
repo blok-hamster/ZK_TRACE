@@ -13,6 +13,7 @@ import * as dagCBOR from "@ipld/dag-cbor";
 import { CarWriter } from "@ipld/car/writer";
 import { MerkleTree } from "merkletreejs";
 import keccak256 from "keccak256";
+import CryptoJS from "crypto-js";
 import axios from "axios";
 
 export class Storage extends Base {
@@ -67,8 +68,13 @@ export class Storage extends Base {
   /// Helpers
 
   private initilizeWeb3Storage = async () => {
-    const storage = new Web3Storage({ token: await this.getWeb3StorageKey() });
-    return storage;
+    try {
+      const storage = new Web3Storage({ token: this.getWeb3StorageKey() });
+      return storage;
+    } catch (e) {
+      console.error(e);
+      throw new Error("Failed to initilize web3Storage");
+    }
   };
 
   private uploadCarToIPFS = async (traceAddress: string) => {
@@ -83,12 +89,13 @@ export class Storage extends Base {
       });
       return cid;
     } catch (e) {
-      throw new Error(e);
+      console.error(e);
+      throw new Error("Upload trace details failed");
     }
   };
 
   public readData = async (cid: string) => {
-    let data: object;
+    let data: any;
     try {
       await axios
         .get(`https://ipfs.io/api/v0/dag/get/${cid}`)
@@ -101,7 +108,8 @@ export class Storage extends Base {
 
       return data;
     } catch (e) {
-      throw new Error(e);
+      console.error(e);
+      throw new Error("read trace data failed");
     }
   };
 
@@ -123,7 +131,8 @@ export class Storage extends Base {
       blocks.push(dataLeaf);
       return { blocks, roots: [dataLeaf.cid] };
     } catch (e) {
-      throw new Error(e);
+      console.error(e);
+      throw new Error("IPLD block creation failed");
     }
   };
 
@@ -147,13 +156,13 @@ export class Storage extends Base {
       }
       return out;
     } catch (e) {
-      throw new Error(e);
+      console.error(e);
+      throw new Error("Writing IPLD block failed");
     }
   };
 
   // @ts-ignore
   public readCar = async (path: string) => {
-    //`./cars/${traceAddress}.car`
     const codecs = {
       [raw.code]: raw,
       [dagJSON.code]: dagJSON,
@@ -168,7 +177,6 @@ export class Storage extends Base {
       const instream = fs.createReadStream(path);
       const reader = await CarReader.fromIterable(instream);
 
-      const roots = await reader.getRoots();
       const blocks = [];
       let data: any;
       let blockCid: string;
@@ -193,17 +201,27 @@ export class Storage extends Base {
       }
       return { blockCid, data };
     } catch (e) {
-      throw new Error(e);
+      console.error(e);
+      throw new Error("Read Car File Failed");
     }
   };
 
   private updatPreviousBlockCid = (data: any, blockCid: string) => {
-    let newData = data;
-    newData.previousBlockCid = blockCid;
-    return newData;
+    try {
+      let newData = data;
+      newData.previousBlockCid = blockCid;
+      return newData;
+    } catch (e) {
+      console.error(e);
+      throw new Error("Failed to update previous block ID");
+    }
   };
 
-  updateCar1 = async (data: any, traceAddress: string, blockCid: string) => {
+  public updateCar1 = async (
+    data: any,
+    traceAddress: string,
+    blockCid: string
+  ) => {
     let cid: string;
     try {
       const newData = this.updatPreviousBlockCid(data, blockCid);
@@ -212,7 +230,8 @@ export class Storage extends Base {
       cid = await this.uploadCarToIPFS(traceAddress);
       return cid;
     } catch (e) {
-      throw new Error(e);
+      console.error(e);
+      throw new Error("Car File Update Failed");
     }
   };
 
@@ -227,7 +246,7 @@ export class Storage extends Base {
         cid: cid,
       };
     } catch (e) {
-      throw new Error(e);
+      console.error(e);
     }
   };
 
@@ -235,32 +254,32 @@ export class Storage extends Base {
   public buff2Hex = (x: any) => "0x" + x.toString("hex");
 
   // @ts-ignore
-  getMerkelTree = async (params: Array<string>) => {
+  public getMerkelTree = async (params: Array<string>) => {
     try {
-      // @ts-ignore
       const leaves = params.map((item) => this.buff2Hex(keccak256(item)));
       const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
       const root = this.buff2Hex(tree.getRoot());
       return { tree, root };
     } catch (e) {
-      throw new Error(e);
+      console.error(e);
+      throw new Error("getMerkelTree Failed");
     }
   };
 
   // @ts-ignore
-  getleave = (address: string) => {
+  public getleave = (address: string) => {
     const hexLeaf = this.buff2Hex(keccak256(address));
     return hexLeaf;
   };
 
-  // @ts-ignore
   private async getMerkelProof1(leaf: string, params: Array<string>) {
     try {
       const { tree } = await this.getMerkelTree(params);
       const proof = tree.getHexProof(leaf);
       return proof;
     } catch (e) {
-      throw new Error(e);
+      console.error(e);
+      throw new Error("Failed to get merkel proof");
     }
   }
 
@@ -275,7 +294,8 @@ export class Storage extends Base {
       const verify = tree.verify(proof, hexLeaf, root);
       return verify;
     } catch (e) {
-      throw new Error(e);
+      console.error(e);
+      throw new Error("merkel Proof Verification failed");
     }
   };
 
@@ -289,7 +309,24 @@ export class Storage extends Base {
       const proof = await this.getMerkelProof1(hexLeaf, params);
       return proof;
     } catch (e) {
-      throw new Error(e);
+      console.error(e);
     }
   };
+
+  public async encrypt(data: Data, key: string): Promise<string> {
+    const encryptedData = CryptoJS.AES.encrypt(
+      JSON.stringify(data),
+      key
+    ).toString();
+
+    return encryptedData;
+  }
+
+  public async decryptData(cid: string, key: string): Promise<Data> {
+    const ipfsReturn = await this.readData(cid);
+    const encryptedData = ipfsReturn.encryptedData;
+    const dataBytes = CryptoJS.AES.decrypt(encryptedData, key);
+    const decryptedData = JSON.parse(dataBytes.toString(CryptoJS.enc.Utf8));
+    return decryptedData;
+  }
 }

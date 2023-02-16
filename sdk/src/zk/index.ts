@@ -13,42 +13,66 @@ export class Zk extends Storage {
   rootToPath: string = "sdk/circuit/root.zok";
 
   private async randomNumber(salt: String): Promise<Array<string>> {
-    let randN: Array<string> = [];
-    for (let i = 0; i < 4; i++) {
-      const prng = seedRandom(salt, { entropy: true });
-      randN.push(Math.abs(prng.int32()).toString());
+    try {
+      let randN: Array<string> = [];
+      for (let i = 0; i < 4; i++) {
+        const prng = seedRandom(salt, { entropy: true });
+        randN.push(Math.abs(prng.int32()).toString());
+      }
+      return randN;
+    } catch (e) {
+      console.error(e);
     }
-    return randN;
   }
 
   public async getNullifier(salt: String): Promise<number> {
-    const prng = seedRandom(salt, { entropy: false });
-    return Math.abs(prng.int32());
+    try {
+      const prng = seedRandom(salt, { entropy: false });
+      return Math.abs(prng.int32());
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   private async fileSystemResolver(
     fromPath: string,
     toPath: string
   ): Promise<any> {
-    const location = resolve(dirname(resolve(fromPath)), toPath);
-    const source = readFileSync(location).toString();
-    return source;
+    try {
+      const location = resolve(dirname(resolve(fromPath)), toPath);
+      const source = readFileSync(location).toString();
+      return source;
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   private async getSource(fromPath: string, toPath: string): Promise<any> {
-    const source = await this.fileSystemResolver(fromPath, toPath);
-    return source;
+    try {
+      const source = await this.fileSystemResolver(fromPath, toPath);
+      return source;
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   private async getZokrateProvider(): Promise<any> {
-    const zokratesProvider = await initialize();
-    return zokratesProvider;
+    try {
+      const zokratesProvider = await initialize();
+      return zokratesProvider;
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   private async getArtifacts(source: any): Promise<any> {
-    const zokratesProvider = await this.getZokrateProvider();
-    const artifacts = zokratesProvider.compile(source);
-    return artifacts;
+    try {
+      const zokratesProvider = await this.getZokrateProvider();
+      const artifacts = zokratesProvider.compile(source);
+      return artifacts;
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   private async getPreImage(params: Array<string>): Promise<Array<string>> {
@@ -61,8 +85,9 @@ export class Zk extends Storage {
       const artifacts = await this.getArtifacts(source);
       const { output } = zokratesProvider.computeWitness(artifacts, params);
       return JSON.parse(output);
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
+      console.error(e);
+      throw new Error("ZK preImage Error");
     }
   }
 
@@ -112,16 +137,17 @@ export class Zk extends Storage {
         details: { proofBuffer, verifierKeyBuffer, nullifier },
       };
     } catch (e) {
-      throw new Error(e);
+      console.error(e);
+      throw new Error("generate zk proof error");
     }
   }
 
   public async verifyZkProof(proofObj: any): Promise<any> {
-    const zkP = proofObj.proofBuffer;
-    const vk = proofObj.verifierKeyBuffer;
-    const proof = JSON.parse(zkP);
-    const verifierKey = JSON.parse(vk);
     try {
+      const zkP = proofObj.proofBuffer;
+      const vk = proofObj.verifierKeyBuffer;
+      const proof = JSON.parse(zkP);
+      const verifierKey = JSON.parse(vk);
       const zokratesProvider = await this.getZokrateProvider();
       const isVerified = zokratesProvider.verify(verifierKey, proof);
       if (!isVerified) {
@@ -135,14 +161,8 @@ export class Zk extends Storage {
         isVerified,
       };
     } catch (e) {
-      throw new Error(e);
+      console.error(e);
+      throw new Error("Verify Zk Proof error");
     }
-  }
-
-  public async verifyZkProof1(proof: Proof): Promise<object> {
-    return this.invoke(`zk/verifyProof`, {
-      method: "POST",
-      body: JSON.stringify(proof),
-    });
   }
 }

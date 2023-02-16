@@ -73,10 +73,8 @@ contract TraceAgreement {
         }
 
         require(status == AgreementStatus.Active, "Trace Agreement is not active");
-        (bool spent) = ITraceHub(traceHub).checkNullifier(address(this), nullifier);
         if(index_ == 0) {
            require(signCount == 0, "first verifier already signed");
-           require(spent == false);
             (bool _verify) = verifierSign(_proof, leaf);
             if(!_verify){
                 revert("invalid details");
@@ -86,7 +84,6 @@ contract TraceAgreement {
             verify = _verify;  
         } else {
             require(index_ == signCount, "Not the next verifier");
-            require(spent == false);
             (bool _verify) = verifierSign(_proof, leaf);
             if(!_verify){
                 revert("invalid details");
