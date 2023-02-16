@@ -32,5 +32,6 @@ export declare class Storage extends Base {
     }>;
     getleave: (address: string) => string;
     private getMerkelProof1;
+    verifyMerkelProof: (proof: Array<string>, address: string, params: Array<string>) => Promise<boolean>;
     createProof: (address: string, params: Array<string>) => Promise<any>;
 }

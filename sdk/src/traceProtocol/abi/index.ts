@@ -449,6 +449,11 @@ const traceHubAbi = [
   {
     inputs: [
       {
+        internalType: "address",
+        name: "traceAddress",
+        type: "address",
+      },
+      {
         internalType: "bytes32",
         name: "nullifier",
         type: "bytes32",

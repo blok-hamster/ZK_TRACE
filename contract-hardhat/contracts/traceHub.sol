@@ -23,7 +23,7 @@ contract TraceHub is AccessControl {
     mapping (uint => address) idToAgreement;
     mapping (address => bool) supplierApproved;
     mapping (address => bool) proofGenerated;
-    mapping (bytes32 => bool) nullifierExist;
+    mapping (address => mapping(bytes32 => bool)) nullifierExist;
     Agreement[] agreementLog;
     
     address traceFactory;
@@ -72,20 +72,20 @@ contract TraceHub is AccessControl {
     function zkProof(address traceAddress, bytes32 nullifier) external {
         require(msg.sender == ITraceAgreement(traceAddress).getTraceAdmin(), "un auth: not admin");
         require(proofGenerated[traceAddress] == false, "ZKP already generated");
-        require(nullifierExist[nullifier] == false, "Nullifier already exist");
+        require(nullifierExist[traceAddress][nullifier] == false, "Nullifier already exist");
         proofGenerated[traceAddress] = true;
-        nullifierExist[nullifier] = true;
+        nullifierExist[traceAddress][nullifier] = true;
     }
 
     function initiateAgreement(address traceAddress, bytes32 nullifier) external {
         require(msg.sender == ITraceAgreement(traceAddress).getTraceAdmin(), "un auth: not admin");
-        require(this.checkNullExist(nullifier) == true, "Invalid Nullifier");
+        require(this.checkNullExist(traceAddress,nullifier) == true, "Invalid Nullifier");
         bool success = ITraceAgreement(traceAddress).activate();
         require(success);
     }
 
-    function checkNullExist(bytes32 nullifier) external view returns(bool){
-        return nullifierExist[nullifier];
+    function checkNullExist(address traceAddress, bytes32 nullifier) external view returns(bool){
+        return nullifierExist[traceAddress][nullifier];
     }
 
     function getAgreementId(address _traceAgreement) public view returns (uint) {
@@ -116,11 +116,12 @@ contract TraceHub is AccessControl {
 
     function checkNullifier(address _traceAgreement, bytes32 _nullifier) external view returns (bool, uint) {
         bool spent =  nullSpent[_traceAgreement][_nullifier];
-        uint index = 0;
+        uint index ;
         bytes32[] memory nullifiers = agreementsStore[_traceAgreement].nullifiers;
         for(uint i = 0; i < nullifiers.length; i++){
             if(nullifiers[i] == _nullifier){
                 index = i;
+                break;
             }
         }
         return (spent, index);
@@ -178,5 +179,5 @@ interface ITraceHub {
     function checkHubAdmin(address hubAdmin) external view returns(bool);
     function checkDeafultAdmin(address addr) external view returns(bool);
     function checkSupplierApproved(address traceAddress) external view returns(bool);
-    function checkNullExist(bytes32 nullifier) external view returns(bool);
+    function checkNullExist(address traceAddress, bytes32 nullifier) external view returns(bool);
 }

@@ -65,15 +65,14 @@ contract TraceAgreement {
         require(status == AgreementStatus.Active, "Trace Agreement is not active");
         (bool spent, uint index) = ITraceHub(traceHub).checkNullifier(address(this), nullifier);
         if(index == 0) {
-           require(signCount == 0, "Not the first verifier");
+           require(signCount == 0, "first verifier already signed");
            require(spent == false);
             (bool _verify) = verifierSign(_proof, msg.sender);
             if(!_verify){
-                revert("Not verifier");
+                revert("invalid details");
             }
             ITraceHub(traceHub).updateNullifier(address(this), nullifier);
             signCount++;
-            _checkVerificationState();
             verify = _verify;  
         } else {
             require(index == signCount, "Not the next verifier");
@@ -83,11 +82,10 @@ contract TraceAgreement {
                 revert("Not verifier");
             }
             ITraceHub(traceHub).updateNullifier(address(this), nullifier);
-            signCount++;
-             _checkVerificationState();
-             emit Verified(signCount, _verify);
+            signCount++;  
             verify = _verify;  
-        } 
+        }
+        _checkVerificationState();
         emit Verified(signCount, verify);  
         return verify;
     }
@@ -95,7 +93,7 @@ contract TraceAgreement {
     function verifierSign(bytes32[] calldata _proof, address addr) internal view returns (bool) {
         bytes32 leaf = keccak256(abi.encodePacked(addr));
         bytes32 root = merkelRoots["verifierRoot"];
-        return MerkleProof.verify(_proof, root, leaf);
+        return MerkleProof.verifyCalldata(_proof, root, leaf);
     }
 
     function activate() external returns(bool){
@@ -109,7 +107,7 @@ contract TraceAgreement {
     }
 
     function _checkVerificationState() internal {
-        if(signCount >= ITraceHub(traceHub).checkNullLength(address(this))){
+        if(signCount == ITraceHub(traceHub).checkNullLength(address(this))){
             status = AgreementStatus.Completed;
         } 
     }

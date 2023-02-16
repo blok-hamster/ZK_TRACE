@@ -257,7 +257,10 @@ export class TraceProtocol extends Zk {
         traceHubAbi,
         signer
       );
-      let nullExist = await traceHub.checkNullExist(proof.nullifier);
+      let nullExist = await traceHub.checkNullExist(
+        traceAddress,
+        proof.nullifier
+      );
 
       if (!nullExist) {
         throw new Error("Invalid Nullifier");

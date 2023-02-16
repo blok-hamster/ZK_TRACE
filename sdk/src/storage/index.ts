@@ -238,8 +238,8 @@ export class Storage extends Base {
   getMerkelTree = async (params: Array<string>) => {
     try {
       // @ts-ignore
-      const leaves = params.map((item) => keccak256(item));
-      const tree = new MerkleTree(leaves, keccak256); //, { sortPairs: true });
+      const leaves = params.map((item) => this.buff2Hex(keccak256(item)));
+      const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
       const root = this.buff2Hex(tree.getRoot());
       return { tree, root };
     } catch (e) {
@@ -257,12 +257,27 @@ export class Storage extends Base {
   private async getMerkelProof1(leaf: string, params: Array<string>) {
     try {
       const { tree } = await this.getMerkelTree(params);
-      const proof = tree.getProof(leaf).map((item) => this.buff2Hex(item.data));
+      const proof = tree.getHexProof(leaf);
       return proof;
     } catch (e) {
       throw new Error(e);
     }
   }
+
+  public verifyMerkelProof = async (
+    proof: Array<string>,
+    address: string,
+    params: Array<string>
+  ): Promise<boolean> => {
+    try {
+      const { tree, root } = await this.getMerkelTree(params);
+      const hexLeaf = this.getleave(address);
+      const verify = tree.verify(proof, hexLeaf, root);
+      return verify;
+    } catch (e) {
+      throw new Error(e);
+    }
+  };
 
   // @ts-ignore
   public createProof = async (
