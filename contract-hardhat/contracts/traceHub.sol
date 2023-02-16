@@ -114,17 +114,9 @@ contract TraceHub is AccessControl {
         return supplierApproved[traceAddress];
     }
 
-    function checkNullifier(address _traceAgreement, bytes32 _nullifier) external view returns (bool, uint) {
-        bool spent =  nullSpent[_traceAgreement][_nullifier];
-        uint index ;
-        bytes32[] memory nullifiers = agreementsStore[_traceAgreement].nullifiers;
-        for(uint i = 0; i < nullifiers.length; i++){
-            if(nullifiers[i] == _nullifier){
-                index = i;
-                break;
-            }
-        }
-        return (spent, index);
+    function checkNullifier(address _traceAgreement, bytes32 _nullifier) external view returns (bool spent) {
+        spent =  nullSpent[_traceAgreement][_nullifier];
+        return spent;
     }
 
     function checkNullLength(address _traceAgreement) external view returns (uint) {
@@ -173,7 +165,7 @@ interface ITraceHub {
     function getAgreementId(address _traceAgreement) external view returns (uint);
     function getTraceAddress(uint id) external view returns(address);
     function getAgreementDetails(address traceAgreement) external view returns (address, uint, uint );
-    function checkNullifier(address _traceAgreement, bytes32 _nullifier) external view returns (bool, uint);
+    function checkNullifier(address _traceAgreement, bytes32 _nullifier) external view returns (bool);
     function checkNullLength(address _traceAgreement) external view returns (uint);
     function updateNullifier(address _traceAgreement, bytes32 _nullifier) external returns (bool);
     function checkHubAdmin(address hubAdmin) external view returns(bool);

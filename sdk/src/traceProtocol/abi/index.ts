@@ -506,13 +506,8 @@ const traceHubAbi = [
     outputs: [
       {
         internalType: "bool",
-        name: "",
+        name: "spent",
         type: "bool",
-      },
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
       },
     ],
     stateMutability: "view",
@@ -1085,6 +1080,11 @@ const traceAgreementAbi = [
       {
         internalType: "bytes32",
         name: "nullifier",
+        type: "bytes32",
+      },
+      {
+        internalType: "bytes32",
+        name: "leaf",
         type: "bytes32",
       },
     ],

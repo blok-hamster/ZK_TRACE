@@ -8,7 +8,7 @@ import {
 } from "./types";
 import { traceFactoryAbi, traceHubAbi, traceAgreementAbi } from "./abi/index";
 import keccak256 from "keccak256";
-import { ethers } from "ethers";
+import { ethers, Signer } from "ethers";
 
 export class TraceProtocol extends Zk {
   public async createTraceAgreement(
@@ -56,7 +56,7 @@ export class TraceProtocol extends Zk {
 
   public async acceptProposal(
     traceAddress: string,
-    signer: any
+    signer: Signer
   ): Promise<boolean> {
     try {
       let events = [];
@@ -175,13 +175,14 @@ export class TraceProtocol extends Zk {
   ): Promise<TraceVerfierReturn> {
     try {
       const provider = await this.getProvider();
+      const leaf = this.getleave(signer.address);
       const traceAgreement = new ethers.Contract(
         traceAddress,
         traceAgreementAbi,
         signer
       );
       let events = [];
-      const tx = await traceAgreement.verifyByOrder(proof, nullifier, {
+      const tx = await traceAgreement.verifyByOrder(proof, nullifier, leaf, {
         gasLimit: 210000,
         maxFeePerGas: ethers.utils.parseUnits("80", "gwei"),
         maxPriorityFeePerGas: ethers.utils.parseUnits("80", "gwei"),
@@ -327,5 +328,21 @@ export class TraceProtocol extends Zk {
     } catch (e) {
       throw new Error(e);
     }
+  }
+
+  public async checkNullifier(
+    traceAddress: string,
+    nullifier: string
+  ): Promise<any> {
+    const provider = await this.getProvider();
+    const traceHub = new ethers.Contract(
+      this.getTraceHubAddress(),
+      traceHubAbi,
+      provider
+    );
+
+    const result = await traceHub.checkNullifier(traceAddress, nullifier);
+
+    return result;
   }
 }

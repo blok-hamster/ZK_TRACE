@@ -21,10 +21,10 @@ contract TraceAgreement {
         uint createdAt;
     }
     Agreement agreements;
+    AgreementStatus public status;
+    bytes32[] nullifiers;
 
     enum AgreementStatus {Created, Active, Completed, Cancelled}
-
-    AgreementStatus public status;
 
     uint signCount = 0;
     bool initilized;
@@ -47,6 +47,7 @@ contract TraceAgreement {
         require(status == AgreementStatus.Created, "Agreement is already active");
         require(signCount == 0, "Agreement is already active");
         _updateRoot(_verifierRoot);
+        nullifiers = _nullifiers;
          initilized = true;
         ITraceAgreementFactory(factoryAddress).initilizeAgreement( _verifierRoot, _nullifiers,agreementUri, address(this));
     }
@@ -60,14 +61,23 @@ contract TraceAgreement {
         agreements.createdAt = block.timestamp;
     }
 
-    function verifyByOrder(bytes32[] calldata _proof, bytes32 nullifier) public  returns (bool) {
+    function verifyByOrder(bytes32[] memory _proof, bytes32 nullifier, bytes32 leaf) public  returns (bool) {
         bool verify;
+        uint index_;
+
+        for(uint i = 0; i<nullifiers.length; i++){
+            if (nullifiers[i] == nullifier){
+                index_ = i;
+                break;
+            }  
+        }
+
         require(status == AgreementStatus.Active, "Trace Agreement is not active");
-        (bool spent, uint index) = ITraceHub(traceHub).checkNullifier(address(this), nullifier);
-        if(index == 0) {
+        (bool spent) = ITraceHub(traceHub).checkNullifier(address(this), nullifier);
+        if(index_ == 0) {
            require(signCount == 0, "first verifier already signed");
            require(spent == false);
-            (bool _verify) = verifierSign(_proof, msg.sender);
+            (bool _verify) = verifierSign(_proof, leaf);
             if(!_verify){
                 revert("invalid details");
             }
@@ -75,11 +85,11 @@ contract TraceAgreement {
             signCount++;
             verify = _verify;  
         } else {
-            require(index == signCount, "Not the next verifier");
+            require(index_ == signCount, "Not the next verifier");
             require(spent == false);
-            (bool _verify) = verifierSign(_proof, msg.sender);
+            (bool _verify) = verifierSign(_proof, leaf);
             if(!_verify){
-                revert("Not verifier");
+                revert("invalid details");
             }
             ITraceHub(traceHub).updateNullifier(address(this), nullifier);
             signCount++;  
@@ -90,10 +100,9 @@ contract TraceAgreement {
         return verify;
     }
 
-    function verifierSign(bytes32[] calldata _proof, address addr) internal view returns (bool) {
-        bytes32 leaf = keccak256(abi.encodePacked(addr));
+    function verifierSign(bytes32[] memory _proof, bytes32 leaf) internal view returns (bool) {
         bytes32 root = merkelRoots["verifierRoot"];
-        return MerkleProof.verifyCalldata(_proof, root, leaf);
+        return MerkleProof.verify(_proof, root, leaf);
     }
 
     function activate() external returns(bool){
@@ -128,7 +137,7 @@ contract TraceAgreement {
 interface ITraceAgreement {
     function getSupplier() external view returns(address);
     function updateRoot(bytes32 verifierRoot, bytes32 initiatorRoot) external;
-    function verifyByOrder(bytes32[] calldata _proof, bytes32 nullifier) external view returns (bool);
+    function verifyByOrder(bytes32[] memory _proof, bytes32 nullifier) external view returns (bool);
     function getTraceAdmin() external view returns(address);
     function activate() external returns(bool);
 }

@@ -10,8 +10,8 @@ const verifier3key =
 
 const traceClient = new ZkTrace({
   nodeEndpoint: "http://127.0.0.1:8545",
-  factoryAddress: "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
-  traceHubAddress: "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
+  factoryAddress: "0xBEc49fA140aCaA83533fB00A2BB19bDdd0290f25",
+  traceHubAddress: "0x4EE6eCAD1c2Dae9f525404De8555724e3c35d07B",
   web3storageApiKey:
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDZlOTA3MkJhNDkwZTZhNTE1NzE2MjBDMDFEMDIzNTA2ZTUzNkQ1NTIiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2NTY4OTMwNDEyNDQsIm5hbWUiOiJwaWNhcmR5X3Byb2ZpbGUifQ.d6_elcpPQfa69XyTHpp_iEvMbAMjoAkba5OFYJv28Xk",
 });
@@ -196,11 +196,11 @@ const activateTraceAgreement = async (traceAddress) => {
     traceAddress,
     {
       proofBuffer:
-        '{"scheme":"g16","curve":"bn128","proof":{"a":["0x00becdf6cfe7f7cbf6026b5c22762bdd6d44ae76cecd13fa7123ff6f269276e5","0x237aaee5f3fea710a9e65a91b260085a98893c5354cbb7e45b0569f04202edc1"],"b":[["0x0f85cc63d45050c1a9f8f7dfa739a7ba0e4659853dd63eb81fa8bd057f2b326c","0x290e8c150b5322c4fac3886b968e99d007926a19596df92661f2e8a466bb1816"],["0x105d7a7aff31099f07c3ad4c7c0d1479355942b9a35f4aa62bf46dd9be245588","0x128a3f363ee30a695d883a6c0306741cc1a52c20a4ac91d5edb94801f23580ec"]],"c":["0x2b14fe4a432e266487ee60fa0b2fe0940c15cda99f22b4c523276c1ede8ad5fa","0x0cf28baa908723c64f50b3c2e82533b02cc8976a887a9d6ed11b4dc4d0fdf1e0"]},"inputs":["0x00000000000000000000000000000000d72244db9ac411a157043ecae532605b","0x000000000000000000000000000000009e00b3d39ab3d112043883cba5ee922e"]}',
+        '{"scheme":"g16","curve":"bn128","proof":{"a":["0x238337005821ee2cbd4a79e7606e0e6eac28c92caeb6f24fa19a758f7677797e","0x19c5032e4014160f58dfef3b4d6a4c20118c7a5bf6acd4e57ffdfb28206c647d"],"b":[["0x036334590f3a151d81f0fbd249f29140b5a8393f4b747bbb7a79c60292e38dd3","0x046c33ba1748a1b32bcd5484a16b6c58415bc84ec22c1ad4a14eab5934a23a2e"],["0x25cd57fde39f74e9000c26c1fd07200726d8d6fc8e936c62eda34d385fc6cdf5","0x0a9526b980e0c33428ed803ed69a50e048bcbdd0d033108e96851c03f029a5b8"]],"c":["0x2965b53f4b95c534e3352754060ef2601d943fcc568400ab6a6e97d01b40f580","0x1e185f70a2b5dde68a00590c2228561dfe48b95c2687887a33f65ab281f64801"]},"inputs":["0x00000000000000000000000000000000a527bdfda55f91477c389a8b6d52a910","0x000000000000000000000000000000007c0f2b563d068ab1b5976dd4ca982bb4"]}',
       verifierKeyBuffer:
-        '{"scheme":"g16","curve":"bn128","alpha":["0x03f346c2d2a8e78bc19475966f41d876dbd8ec4112dad79f7182c53fdd1c6566","0x03387021b7e5e1d4847fab3841e22e095625b1e7ab739867e16afc707293d8af"],"beta":[["0x1ee1385c8898cef1962573570c8444e67d6b0c48c2ae794964a4c2f941958f32","0x27ea28ff3e9731aa7992d0a5f1f66e0aeffa71b014ff49310f8ca349bf71cd2f"],["0x058e5988de237923e6304fc0a8584060cf729f8bdc588fec89c81141d4776236","0x1d9b41036870c887b9c8809f8d6bd3d4ae03820b62f4c0176e09c78438c17102"]],"gamma":[["0x16d1f7277a2ba10aa1065db55f93332bfa42b174971cc8ad674d16769e4c41e4","0x1eae8aa3af13b4fc5e2be48139c38df3cf8f318d8f8f012041ee48dc766f04df"],["0x22f27276a46dae84fa2c1379109fc228dc15c53268be70e2867178a54f32c185","0x2f75f5643f4c43131a5e251f720c0211d2323b4feaebf4c32b90bb0a5582d1f0"]],"delta":[["0x0d2cb24119206d2e025fe21bea4d8341e0fe45f02f6d77e8736799e5c7617a2f","0x1bd9bc6633208d3f2882afc700449eaf9fcbf3697dfa0bf13ef5be39718320a2"],["0x05acb45252419c3b3bbe182acc94f6d3d26a2f6b046dbd638d5736d170c48611","0x2d50e82d691067fa94fdda1759c10170dc71f52fec9b46d91227d6a2afecaf49"]],"gamma_abc":[["0x2f3e1af9dc3d46b1b25595ee56cea7a990a51b56c0fd89fc9ce455cd907dca2e","0x091ea30e294b16db038d343e1a877ce2306e8fdb13d242d88c23bf802096a2d1"],["0x2fe20ffe1699cd433b4a211eb63057ac4817d5e525269d072c4cfa5733d2d5cb","0x174cd950adcfa404bf08a63ae20c844c80dc7528ddb03305bb0a4ff9202a971b"],["0x26d943ae62ff05dc0311b492be1d53bc2b5ed071e4d5112d30ed11fe1dc00e9b","0x15822fb1b615ab88834c95c16f9cd3ffc7810609f937a6c9fc87dee56d7d92eb"]]}',
+        '{"scheme":"g16","curve":"bn128","alpha":["0x1d6877c6b50d19e4f050b51975c0849c45c6607a9c1a111b438ee5fdfdffc5e6","0x1feae3887326d0ce8ee61a223925cb4e47c9e7097db1673f56c85a993cedba2f"],"beta":[["0x1fc930b97a4cd5347f17dd09b30333636320f524db3516c1a7c35d7d1f4ced90","0x0a96e230d044f2b614c6f48d37054c18be545f3e33e1929435e3bc99505ef2df"],["0x0e599a92acb177be154d3adc329b24820b4b7d5cb1c968a4646f8ee144828c59","0x1b6c40763a36f6e7a4ecce71ca8a3b883e6769df9c0a2d6bffb3b6682bb56280"]],"gamma":[["0x1de523c88ce8d5f6b008fe5181cb3fdd83490affe814c66dc45fb7947764de5e","0x1d4cc2b2e3c78b2b0676624f5c5c4649fa7d1e700650f093381856498e4f008d"],["0x100edd5f4836b5cd415d29adba76d61eb253819cbe604bf929e19b0bf91f6f7e","0x13372bba36211a23f9f00af61c0e8e7fa7706a0d2ba7442fb30626e5f1266676"]],"delta":[["0x245b32648a8cb96057e51d79e9575ea22a5262da1249cf53b9afb3be37b350e3","0x2eb149b04ee5c81e9dd71d4d38c00add9b2a4cf74b023bf35df23f70a91ff919"],["0x031fc8c60695d97703e5506948d05a61997e61cf18e2cec21961e55cb4840f8c","0x20dc0be4a164810f90ab99fa15c96930a72a2561fc62e54198688a28259a8e80"]],"gamma_abc":[["0x1b7562f23c6614104e2c452fa3ac44cad45c85d589487efbdd5cd9b4e24e3909","0x28225ccc744bc4cada349e800f30cf7ab6a94dd239d69b8b8fa1c666cd019f52"],["0x002ea999f94c6aef116a70bf182040d2d2b4b12593d866770cdff6b54177c4a4","0x13914275d7e02502d7841a9017c376a8f3f12b48d97a4280cef5103bebdf3831"],["0x1590d251e3200c9761183e71a40dc35b6450557b3b4c99558f54fe285e130c11","0x14070e48c352b97313a99c39b671497ed9ec99adffe3e1cb6c8dcd7cb9d94b84"]]}',
       nullifier:
-        "0x52bb3cd72903d82f3eb8f75e8f8686176fefd7b05fd537d6dbef522b596135db",
+        "0xa3acdbea68a65e6accc18c8909803db35c281b78d86320e25f6307889d4baddc",
     },
     signer
   );
@@ -254,12 +254,17 @@ const verifyMerkelProf = async () => {
   console.log(result);
 };
 
+const checkNullifier = async (traceAddress, nullifier) => {
+  const result = await traceClient.checkNullifier(traceAddress, nullifier);
+  console.log(result);
+};
+
 const verifyByOrder = async (traceAddress, proof, nullifier) => {
   const provider = new ethers.providers.JsonRpcProvider(
     `http://127.0.0.1:8545`
   );
 
-  const wallet = new Wallet(verifier1key);
+  const wallet = new Wallet(verifier3key);
 
   const signer = wallet.connect(provider);
   const result = await traceClient.verifyByOrder(
@@ -294,25 +299,27 @@ const verifyByOrder = async (traceAddress, proof, nullifier) => {
 
 //createTraceAgreement();
 
-//acceptProposal("0xbc4687BFc037B3a42C14De6Aad558A4b927546e6");
+//acceptProposal("0x3B853997e2376c0aE23D20a1832acaEA3955Ae36");
 
-//init("0xbc4687BFc037B3a42C14De6Aad558A4b927546e6");
+//init("0x3B853997e2376c0aE23D20a1832acaEA3955Ae36");
 
 //writeCar();
 
-//createZkProof("0xbc4687BFc037B3a42C14De6Aad558A4b927546e6");
+//createZkProof("0x3B853997e2376c0aE23D20a1832acaEA3955Ae36");
 
-//activateTraceAgreement("0xbc4687BFc037B3a42C14De6Aad558A4b927546e6");
+//activateTraceAgreement("0x3B853997e2376c0aE23D20a1832acaEA3955Ae36");
 
-verifyByOrder(
-  "0xbc4687BFc037B3a42C14De6Aad558A4b927546e6",
-  [
-    "0x00314e565e0574cb412563df634608d76f5c59d9f817e85966100ec1d48005c0",
-    "0x1ebaa930b8e9130423c183bf38b0564b0103180b7dad301013b18e59880541ae",
-  ],
-  "0x44408614cbec39c6fe6cce215e68e0828b961047bc1f4f54e5bd5a56f2cd480b"
-);
+// verifyByOrder(
+//   "0x3B853997e2376c0aE23D20a1832acaEA3955Ae36",
+//   ["0x343750465941b29921f50a28e0e43050e5e1c2611a3ea8d7fe1001090d5e1436"],
+//   "0x28d26f9eb862456054139fea3778dafe80cdbf35d29a8d57c8f43f15e8e8d51e"
+// );
 
 //getVerifiersProof();
 
 //verifyMerkelProf();
+
+// checkNullifier(
+//   "0x3B853997e2376c0aE23D20a1832acaEA3955Ae36",
+//   "0x343750465941b29921f50a28e0e43050e5e1c2611a3ea8d7fe1001090d5e1436"
+// );
