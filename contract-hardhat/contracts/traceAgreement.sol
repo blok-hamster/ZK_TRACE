@@ -29,11 +29,13 @@ contract TraceAgreement {
     uint signCount = 0;
     bool initilized;
     bool adminAdded;
+    uint dataAvailibality;
 
-    function addTraceAdmin(address _traceAdmin, address _supplier,address _factoryAddress, address _traceHub) external {
+    function addTraceAdmin(address _traceAdmin, address _supplier,address _factoryAddress, address _traceHub, uint _dataAvailibality) external {
         require( adminAdded == false, "Admin already updated");
         traceAdmin = _traceAdmin;
         supplier = _supplier;
+        dataAvailibality = _dataAvailibality;
         traceHub = _traceHub;
         factoryAddress = _factoryAddress;
         status = AgreementStatus.Created;
@@ -41,7 +43,7 @@ contract TraceAgreement {
     }
     
 
-    function initilize(bytes32 _verifierRoot, bytes32[] calldata _nullifiers,string calldata agreementUri) external {
+    function initilize(bytes32 _verifierRoot, bytes32[] calldata _nullifiers,string calldata agreementUri, string memory enKey) external {
         require(msg.sender == traceAdmin, "Un-auth: Not trace admin");
         require(!initilized, "already intilized");
         require(status == AgreementStatus.Created, "Agreement is already active");
@@ -49,7 +51,7 @@ contract TraceAgreement {
         _updateRoot(_verifierRoot);
         nullifiers = _nullifiers;
          initilized = true;
-        ITraceAgreementFactory(factoryAddress).initilizeAgreement( _verifierRoot, _nullifiers,agreementUri, address(this));
+        ITraceAgreementFactory(factoryAddress).initilizeAgreement( _verifierRoot, _nullifiers,agreementUri, address(this), enKey);
     }
 
     function _updateRoot(bytes32 verifierRoot) internal {
@@ -95,6 +97,10 @@ contract TraceAgreement {
         _checkVerificationState();
         emit Verified(signCount, verify);  
         return verify;
+    }
+
+    function getDataAvailibality() external view returns(uint){
+        return dataAvailibality;
     }
 
     function verifierSign(bytes32[] memory _proof, bytes32 leaf) internal view returns (bool) {

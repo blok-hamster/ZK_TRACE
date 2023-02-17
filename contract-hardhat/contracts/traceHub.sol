@@ -17,6 +17,7 @@ contract TraceHub is AccessControl {
         uint createdAt;
         string uri ;
         bytes32 [] nullifiers;
+        string encryptionKey;
     }
 
     mapping(address => mapping(bytes32 => bool)) nullSpent;
@@ -45,10 +46,10 @@ contract TraceHub is AccessControl {
        _setupRole(HUB_ADMIN, hubAdmin);
     }
 
-    function updatAgreementLog(address _traceAgreement, string calldata agreementUri, bytes32[] calldata _nullifiers, uint id) external {
+    function updatAgreementLog(address _traceAgreement, string calldata agreementUri, bytes32[] calldata _nullifiers, uint id, string memory enKey) external {
         require( _traceAgreement != address(0), "invalid Agreement Address");
         require(msg.sender == traceFactory, "only traceFactory can update agreement log");
-        Agreement memory _newAgreement = Agreement(_traceAgreement, id, block.timestamp, agreementUri, _nullifiers);
+        Agreement memory _newAgreement = Agreement(_traceAgreement, id, block.timestamp, agreementUri, _nullifiers, enKey);
         agreementLog.push(_newAgreement);
         idToAgreement[id] =  _traceAgreement; 
     }
@@ -97,8 +98,12 @@ contract TraceHub is AccessControl {
         return idToAgreement[id];
     }
 
-    function getAgreementUri(address _traceAgreement) public view returns (string memory) {
+    function getAgreementUri(address _traceAgreement) external view returns (string memory) {
         return agreementsStore[_traceAgreement].uri;
+    }
+
+    function getEncryptionKey(address _traceAgreement) external view returns (string memory) {
+        return agreementsStore[_traceAgreement].encryptionKey;
     }
 
     function getAgreementDetails(address _traceAgreement) public view returns (address, uint, uint) {
@@ -161,7 +166,7 @@ contract TraceHub is AccessControl {
 }
 
 interface ITraceHub {
-    function updatAgreementLog(address _traceAgreement, string calldata agreementUri, bytes32[] calldata _nullifiers, uint id) external;
+    function updatAgreementLog(address _traceAgreement, string calldata agreementUri, bytes32[] calldata _nullifiers, uint id, string memory enKey) external;
     function getAgreementId(address _traceAgreement) external view returns (uint);
     function getTraceAddress(uint id) external view returns(address);
     function getAgreementDetails(address traceAgreement) external view returns (address, uint, uint );

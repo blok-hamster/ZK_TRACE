@@ -21,16 +21,17 @@ contract TraceAgreementFactory {
     }
 
     uint agreementId;
+
     constructor(address _traceHub, address _traceAgreementImplementation) {
         traceHub = _traceHub;
         traceAgreementImplementation = _traceAgreementImplementation;
     }
     
-    function newTraceAgreement( address traceAdmin, address _supplier) external returns (address, uint) {
+    function newTraceAgreement( address traceAdmin, address _supplier, uint dataAvailiblity) external returns (address, uint) {
         uint id = agreementId;
         bytes32 salt = keccak256(abi.encodePacked(id, block.number, block.timestamp));
         address payable _traceAgreement = payable(Clones.cloneDeterministic(traceAgreementImplementation, salt));
-        TraceAgreement(_traceAgreement).addTraceAdmin(traceAdmin, _supplier, address(this), traceHub);
+        TraceAgreement(_traceAgreement).addTraceAdmin(traceAdmin, _supplier, address(this), traceHub, dataAvailiblity);
         idToAddress[agreementId] = _traceAgreement;
         ids[_traceAgreement] = agreementId;
         agreementId++;
@@ -38,14 +39,14 @@ contract TraceAgreementFactory {
         return (_traceAgreement, id);
     }
 
-    function initilizeAgreement(bytes32 _verifierRoot,bytes32[] calldata _nullifiers,string calldata agreementUri, address  _traceAgreement) external {
+    function initilizeAgreement(bytes32 _verifierRoot,bytes32[] calldata _nullifiers,string calldata agreementUri, address  _traceAgreement, string memory enKey) external {
         require( _traceAgreement != address(0), "invalid Agreement Address");
         require(msg.sender == _traceAgreement, "caller must be trace agreement");
         require(ITraceHub(traceHub).checkSupplierApproved(_traceAgreement) == true, "supplier has not approved");
         uint id = this.getId(_traceAgreement);
         TraceAgreementDetails memory _traceDetails = TraceAgreementDetails({verifierRoot: _verifierRoot,  nullifiers: _nullifiers, agreementUri: agreementUri, agreementId: id});
         traceDetails[_traceAgreement] = _traceDetails;
-        ITraceHub(traceHub).updatAgreementLog(_traceAgreement, agreementUri, _nullifiers, id);
+        ITraceHub(traceHub).updatAgreementLog(_traceAgreement, agreementUri, _nullifiers, id, enKey);
     }
 
     function getAgreementDetais(address agreementAddress) external view returns(TraceAgreementDetails memory){
@@ -72,7 +73,8 @@ interface ITraceAgreementFactory{
         string agreementUri;
         uint agreementId;
     }
-     function initilizeAgreement(bytes32 _verifierRoot,bytes32[] calldata _nullifiers,string calldata agreementUri, address  _traceAgreement) external;
+    
+    function initilizeAgreement(bytes32 _verifierRoot,bytes32[] calldata _nullifiers,string calldata agreementUri, address  _traceAgreement, string memory enKey) external ;
     function getAgreementDetais(address agreementAddress) external view returns(TraceAgreementDetails memory);
     function getId(address agreementAddress) external view returns(uint);
 }

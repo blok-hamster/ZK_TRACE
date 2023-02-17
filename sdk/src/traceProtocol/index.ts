@@ -1,8 +1,3 @@
-//Todo add data availabilty to newTraceAgreement function arguement
-//Add key paramater to initilize agreement function
-//Add key to details stored on traceHub
-//Add function to view key
-
 import { Zk } from "src/zk";
 import {
   verifierDetails,
@@ -21,7 +16,7 @@ export class TraceProtocol extends Zk {
   public async createTraceAgreement(
     adminAddress: string,
     supplierAddress: string,
-    dataAvailabilty: number,
+    dataAvailibality: number,
     signer: Signer
   ): Promise<CreateAgreementReturn> {
     try {
@@ -36,7 +31,7 @@ export class TraceProtocol extends Zk {
       const tx = await traceFactory.newTraceAgreement(
         adminAddress,
         supplierAddress,
-        dataAvailabilty
+        dataAvailibality
       );
       const receipt = await tx.wait();
 
@@ -120,7 +115,7 @@ export class TraceProtocol extends Zk {
         signer
       );
 
-      const dataAvalibality = await traceAgreement.dataAvalibality();
+      const dataAvailibality = await traceAgreement.getDataAvailibality();
       const details = (await this.getVerifiersDetails(verifiers)).details;
       const keyNull = this.buff2Hex(
         keccak256(
@@ -133,9 +128,9 @@ export class TraceProtocol extends Zk {
       const nanoid = customAlphabet(keyNull, 32);
       const key = nanoid();
       let en_key: string;
-      if (dataAvalibality === 1) {
+      if (dataAvailibality === 1) {
         en_key = key;
-      } else if (dataAvalibality === 1) {
+      } else if (dataAvailibality === 2) {
         en_key = "";
       }
 
@@ -283,25 +278,39 @@ export class TraceProtocol extends Zk {
   public async verifyByOrder(
     traceAddress: string,
     nullifier: string,
-    signer: any
+    signer: any,
+    key?: string
   ): Promise<TraceVerfierReturn> {
     try {
+      let en_key: string;
       const traceHub = new ethers.Contract(
         this.getTraceHubAddress(),
         traceHubAbi,
         signer
       );
 
-      const cid = await traceHub.getAgreementUri(traceAddress);
-      const verifiers = (await this.readData(cid)).verifiers;
-      const proof = await this.createProof(signer.address, verifiers);
-
-      const leaf = this.getleave(signer.address);
       const traceAgreement = new ethers.Contract(
         traceAddress,
         traceAgreementAbi,
         signer
       );
+
+      const dataAvailibality = await traceAgreement.getDataAvailibality();
+
+      if (dataAvailibality === 2 && key === undefined) {
+        throw new Error("encryption key is not defined");
+      } else if (dataAvailibality === 1) {
+        en_key = await traceHub.getEncryptionKey(traceAddress);
+      } else {
+        en_key = key;
+      }
+
+      const cid = await traceHub.getAgreementUri(traceAddress);
+      const verifiers = (await this.decryptData(cid, en_key)).verifiers;
+      const proof = await this.createProof(signer.address, verifiers);
+
+      const leaf = this.getleave(signer.address);
+
       let events = [];
       const tx = await traceAgreement.verifyByOrder(proof, nullifier, leaf, {
         gasLimit: 210000,
