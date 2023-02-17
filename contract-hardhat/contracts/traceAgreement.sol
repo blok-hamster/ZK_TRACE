@@ -30,6 +30,8 @@ contract TraceAgreement {
     bool initilized;
     bool adminAdded;
     uint dataAvailibality;
+    string agreementUri;
+    string en_key;
 
     function addTraceAdmin(address _traceAdmin, address _supplier,address _factoryAddress, address _traceHub, uint _dataAvailibality) external {
         require( adminAdded == false, "Admin already updated");
@@ -43,21 +45,22 @@ contract TraceAgreement {
     }
     
 
-    function initilize(bytes32 _verifierRoot, bytes32[] calldata _nullifiers,string calldata agreementUri, string memory enKey) external {
+    function initilize(bytes32 _verifierRoot, bytes32[] calldata _nullifiers,string calldata _agreementUri, string memory enKey) external {
         require(msg.sender == traceAdmin, "Un-auth: Not trace admin");
         require(!initilized, "already intilized");
         require(status == AgreementStatus.Created, "Agreement is already active");
         require(signCount == 0, "Agreement is already active");
         _updateRoot(_verifierRoot);
+        agreementUri = _agreementUri;
+        en_key = enKey;
         nullifiers = _nullifiers;
-         initilized = true;
+        initilized = true;
         ITraceAgreementFactory(factoryAddress).initilizeAgreement( _verifierRoot, _nullifiers,agreementUri, address(this), enKey);
     }
 
     function _updateRoot(bytes32 verifierRoot) internal {
         string memory _verifierRoot = "verifierRoot";
         uint id = ITraceHub(traceHub).getAgreementId(address(this));
-
         merkelRoots[_verifierRoot] = verifierRoot;
         agreements.agreementId = id;
         agreements.createdAt = block.timestamp;
@@ -81,7 +84,8 @@ contract TraceAgreement {
             if(!_verify){
                 revert("invalid details");
             }
-            ITraceHub(traceHub).updateNullifier(address(this), nullifier);
+            (bool success) = ITraceHub(traceHub).updateNullifier(address(this), nullifier);
+            require(success);
             signCount++;
             verify = _verify;  
         } else {
@@ -90,7 +94,8 @@ contract TraceAgreement {
             if(!_verify){
                 revert("invalid details");
             }
-            ITraceHub(traceHub).updateNullifier(address(this), nullifier);
+            (bool success) = ITraceHub(traceHub).updateNullifier(address(this), nullifier);
+            require(success);
             signCount++;  
             verify = _verify;  
         }
@@ -99,8 +104,22 @@ contract TraceAgreement {
         return verify;
     }
 
+    function updateAgreementUri(string calldata _agreementUri) external returns (bool){
+        require(msg.sender == traceAdmin, "Not trace admin");
+        agreementUri = _agreementUri;
+        return true;
+    }
+
     function getDataAvailibality() external view returns(uint){
         return dataAvailibality;
+    }
+
+    function getAgreementUri() external view returns(string memory){
+        return agreementUri;
+    }
+
+    function getEncryptionKey() external view returns(string memory){
+        return en_key;
     }
 
     function verifierSign(bytes32[] memory _proof, bytes32 leaf) internal view returns (bool) {
@@ -118,10 +137,13 @@ contract TraceAgreement {
         return uint(status);
     }
 
-    function _checkVerificationState() internal {
-        if(signCount == ITraceHub(traceHub).checkNullLength(address(this))){
+    function _checkVerificationState() internal returns(bool) {
+        bool os;
+        if(signCount >= nullifiers.length){
             status = AgreementStatus.Completed;
-        } 
+            os = true;
+        }
+        return os;
     }
 
     function getAgreementId() external view returns(uint){
@@ -130,6 +152,10 @@ contract TraceAgreement {
 
     function getSupplier() external view returns(address){
         return supplier;
+    }
+
+    function checkIsInitilized() external view returns (bool){
+        return initilized;
     }
 
     function getTraceAdmin() external view returns(address){

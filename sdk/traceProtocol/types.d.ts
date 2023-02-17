@@ -26,6 +26,7 @@ export declare type InitializeAgreementReturn = {
     message: string;
     transactionHash: string;
     verificationDetails: Array<object>;
+    encryptionKey: string;
 };
 export declare type CreateAgreementReturn = {
     message: string;
@@ -34,4 +35,11 @@ export declare type CreateAgreementReturn = {
         agreementAddress: string;
         agreementId: number;
     };
+};
+export declare type Data = {
+    traceAddress: string;
+    verifiersRoot: string;
+    verifiers: Array<string>;
+    txDetails: object;
+    previousBlockCid: string;
 };

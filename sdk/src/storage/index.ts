@@ -313,7 +313,7 @@ export class Storage extends Base {
     }
   };
 
-  public async encrypt(data: Data, key: string): Promise<string> {
+  public async encryptData(data: Data, key: string): Promise<string> {
     const encryptedData = CryptoJS.AES.encrypt(
       JSON.stringify(data),
       key

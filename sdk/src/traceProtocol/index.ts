@@ -5,7 +5,6 @@ import {
   TraceVerfierReturn,
   InitializeAgreementReturn,
   CreateAgreementReturn,
-  Data,
 } from "./types";
 import { traceFactoryAbi, traceHubAbi, traceAgreementAbi } from "./abi/index";
 import keccak256 from "keccak256";
@@ -36,7 +35,8 @@ export class TraceProtocol extends Zk {
       const receipt = await tx.wait();
 
       if (receipt.status != 1) {
-        throw new Error("Creation Failed");
+        console.log("Creation Failed");
+        return;
       }
 
       for (let item of receipt.events) {
@@ -79,7 +79,8 @@ export class TraceProtocol extends Zk {
 
       const receipt = await tx.wait();
       if (receipt.status != 1) {
-        throw new Error("verification failed");
+        console.log("verification failed");
+        return;
       }
 
       for (let item of receipt.events) {
@@ -115,25 +116,24 @@ export class TraceProtocol extends Zk {
         signer
       );
 
+      if ((await traceAgreement.checkIsInitilized) == true) {
+        console.log("Trace Agreement already initilized");
+        return;
+      }
       const dataAvailibality = await traceAgreement.getDataAvailibality();
       const details = (await this.getVerifiersDetails(verifiers)).details;
       const keyNull = this.buff2Hex(
-        keccak256(
-          abi.encode(
-            ["uint", "uint", "string[]"],
-            [timeStamp, blockNumber, details.nullifiers]
-          )
-        )
+        keccak256(abi.encode(["uint", "uint"], [timeStamp, blockNumber]))
       );
       const nanoid = customAlphabet(keyNull, 32);
       const key = nanoid();
       let en_key: string;
-      if (dataAvailibality === 1) {
+      if (dataAvailibality.toString() === "1") {
         en_key = key;
-      } else if (dataAvailibality === 2) {
+      } else if (dataAvailibality.toString() === "2") {
         en_key = "";
       }
-
+      en_key = key;
       const _data = {
         traceAddress: traceAddress,
         verifiersRoot: details.verifiersRoot,
@@ -142,7 +142,7 @@ export class TraceProtocol extends Zk {
         previousBlockCid: "",
       };
 
-      const strEncrypted = await this.encrypt(_data, key);
+      const strEncrypted = await this.encryptData(_data, key);
       const data = {
         encryptedData: strEncrypted,
       };
@@ -163,7 +163,8 @@ export class TraceProtocol extends Zk {
       const receipt = await tx.wait();
 
       if (receipt.status != 1) {
-        throw new Error("initilization failed");
+        console.log("initilization failed");
+        return;
       }
 
       for (let i = 0; i < verifiers.length; i++) {
@@ -182,7 +183,7 @@ export class TraceProtocol extends Zk {
       };
     } catch (e) {
       console.error(e);
-      throw new Error("Initilize agreement failed");
+      throw new Error(e);
     }
   }
 
@@ -202,7 +203,8 @@ export class TraceProtocol extends Zk {
 
       const approved = await traceHub.checkSupplierApproved(traceAddress);
       if (!approved) {
-        throw new Error("Supplier has not approved");
+        console.log("Supplier has not approved");
+        return;
       }
       const tx = await traceHub.zkProof(traceAddress, proof.details.nullifier, {
         gasLimit: 21000000,
@@ -212,7 +214,8 @@ export class TraceProtocol extends Zk {
 
       const receipt = await tx.wait();
       if (receipt.status != 1) {
-        throw new Error("verification failed");
+        console.log("verification failed");
+        return;
       }
 
       return proof.details;
@@ -240,7 +243,8 @@ export class TraceProtocol extends Zk {
       );
 
       if (!nullExist) {
-        throw new Error("Invalid Nullifier");
+        console.log("Invalid Nullifier");
+        return;
       }
       const zkProof = await this.verifyZkProof({
         proofBuffer: proof.proofBuffer,
@@ -248,7 +252,8 @@ export class TraceProtocol extends Zk {
       });
 
       if (zkProof.message != "Ok") {
-        throw new Error("Invalid ZK Proof Provided");
+        console.log("Invalid ZK Proof Provided");
+        return;
       }
 
       const tx = await traceHub.initiateAgreement(
@@ -263,7 +268,8 @@ export class TraceProtocol extends Zk {
 
       const receipt = await tx.wait();
       if (receipt.status != 1) {
-        throw new Error("failed to initiate");
+        console.log("failed to initiate");
+        return;
       }
 
       return {
@@ -283,11 +289,6 @@ export class TraceProtocol extends Zk {
   ): Promise<TraceVerfierReturn> {
     try {
       let en_key: string;
-      const traceHub = new ethers.Contract(
-        this.getTraceHubAddress(),
-        traceHubAbi,
-        signer
-      );
 
       const traceAgreement = new ethers.Contract(
         traceAddress,
@@ -298,14 +299,15 @@ export class TraceProtocol extends Zk {
       const dataAvailibality = await traceAgreement.getDataAvailibality();
 
       if (dataAvailibality === 2 && key === undefined) {
-        throw new Error("encryption key is not defined");
+        console.log("encryption key is not defined");
+        return;
       } else if (dataAvailibality === 1) {
-        en_key = await traceHub.getEncryptionKey(traceAddress);
+        en_key = await traceAgreement.getEncryptionKey();
       } else {
         en_key = key;
       }
 
-      const cid = await traceHub.getAgreementUri(traceAddress);
+      const cid = await traceAgreement.getAgreementUri();
       const verifiers = (await this.decryptData(cid, en_key)).verifiers;
       const proof = await this.createProof(signer.address, verifiers);
 
@@ -320,7 +322,8 @@ export class TraceProtocol extends Zk {
 
       const receipt = await tx.wait();
       if (receipt.status != 1) {
-        throw new Error("verification failed");
+        console.log("verification failed");
+        return;
       }
 
       for (let item of receipt.events) {
@@ -348,7 +351,6 @@ export class TraceProtocol extends Zk {
     try {
       let nullifier: Array<string> = [];
       const abi = ethers.utils.defaultAbiCoder;
-      const provider = await this.getProvider();
 
       const { root } = await this.getMerkelTree(verifiers);
       const timeStamp: any = parseInt(
@@ -393,6 +395,28 @@ export class TraceProtocol extends Zk {
     } catch (e) {
       console.error(e);
       throw new Error("get verifier proof error");
+    }
+  }
+
+  public async encryptionDetails(traceAddress: string): Promise<any> {
+    try {
+      const provider = await this.getProvider();
+
+      const traceAgreement = new ethers.Contract(
+        traceAddress,
+        traceAgreementAbi,
+        provider
+      );
+
+      const en_key = await traceAgreement.getEncryptionKey();
+      const cid = await traceAgreement.getAgreementUri();
+
+      return {
+        encryptionKey: en_key,
+        cid: cid,
+      };
+    } catch (e) {
+      console.error(e);
     }
   }
 }

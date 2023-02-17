@@ -154,6 +154,11 @@ const traceFactoryAbi = [
         name: "_traceAgreement",
         type: "address",
       },
+      {
+        internalType: "string",
+        name: "enKey",
+        type: "string",
+      },
     ],
     name: "initilizeAgreement",
     outputs: [],
@@ -171,6 +176,11 @@ const traceFactoryAbi = [
         internalType: "address",
         name: "_supplier",
         type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "dataAvailiblity",
+        type: "uint256",
       },
     ],
     name: "newTraceAgreement",
@@ -506,7 +516,7 @@ const traceHubAbi = [
     outputs: [
       {
         internalType: "bool",
-        name: "spent",
+        name: "",
         type: "bool",
       },
     ],
@@ -611,6 +621,11 @@ const traceHubAbi = [
             name: "nullifiers",
             type: "bytes32[]",
           },
+          {
+            internalType: "string",
+            name: "encryptionKey",
+            type: "string",
+          },
         ],
         internalType: "struct TraceHub.Agreement[]",
         name: "",
@@ -629,6 +644,25 @@ const traceHubAbi = [
       },
     ],
     name: "getAgreementUri",
+    outputs: [
+      {
+        internalType: "string",
+        name: "",
+        type: "string",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "_traceAgreement",
+        type: "address",
+      },
+    ],
+    name: "getEncryptionKey",
     outputs: [
       {
         internalType: "string",
@@ -840,6 +874,11 @@ const traceHubAbi = [
         name: "id",
         type: "uint256",
       },
+      {
+        internalType: "string",
+        name: "enKey",
+        type: "string",
+      },
     ],
     name: "updatAgreementLog",
     outputs: [],
@@ -963,10 +1002,28 @@ const traceAgreementAbi = [
         name: "_traceHub",
         type: "address",
       },
+      {
+        internalType: "uint256",
+        name: "_dataAvailibality",
+        type: "uint256",
+      },
     ],
     name: "addTraceAdmin",
     outputs: [],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "checkIsInitilized",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -990,6 +1047,45 @@ const traceAgreementAbi = [
         internalType: "uint256",
         name: "",
         type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getAgreementUri",
+    outputs: [
+      {
+        internalType: "string",
+        name: "",
+        type: "string",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getDataAvailibality",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getEncryptionKey",
+    outputs: [
+      {
+        internalType: "string",
+        name: "",
+        type: "string",
       },
     ],
     stateMutability: "view",
@@ -1035,7 +1131,12 @@ const traceAgreementAbi = [
       },
       {
         internalType: "string",
-        name: "agreementUri",
+        name: "_agreementUri",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "enKey",
         type: "string",
       },
     ],
@@ -1068,6 +1169,25 @@ const traceAgreementAbi = [
       },
     ],
     stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "string",
+        name: "_agreementUri",
+        type: "string",
+      },
+    ],
+    name: "updateAgreementUri",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
+      },
+    ],
+    stateMutability: "nonpayable",
     type: "function",
   },
   {

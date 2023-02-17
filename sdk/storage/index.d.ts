@@ -10,7 +10,7 @@ export declare class Storage extends Base {
     getMerkelProof(traceAddress: string, verifierAddress: string): Promise<object>;
     private initilizeWeb3Storage;
     private uploadCarToIPFS;
-    readData: (cid: string) => Promise<object>;
+    readData: (cid: string) => Promise<any>;
     utf8Encoder: TextEncoder;
     utf8Decoder: TextDecoder;
     private createBlock;
@@ -34,4 +34,6 @@ export declare class Storage extends Base {
     private getMerkelProof1;
     verifyMerkelProof: (proof: Array<string>, address: string, params: Array<string>) => Promise<boolean>;
     createProof: (address: string, params: Array<string>) => Promise<any>;
+    encryptData(data: Data, key: string): Promise<string>;
+    decryptData(cid: string, key: string): Promise<Data>;
 }
