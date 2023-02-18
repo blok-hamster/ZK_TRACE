@@ -5,6 +5,7 @@ import {
   TraceVerfierReturn,
   InitializeAgreementReturn,
   CreateAgreementReturn,
+  ProofDetails,
 } from "./types";
 import { traceFactoryAbi, traceHubAbi, traceAgreementAbi } from "./abi/index";
 import keccak256 from "keccak256";
@@ -19,7 +20,7 @@ export class TraceProtocol extends Zk {
     signer: Signer
   ): Promise<CreateAgreementReturn> {
     try {
-      const provider = await this.getProvider();
+      //const provider = await this.getProvider();
       const traceFactory = new ethers.Contract(
         this.getFactoryAddress(),
         traceFactoryAbi,
@@ -134,6 +135,12 @@ export class TraceProtocol extends Zk {
         en_key = "";
       }
       en_key = key;
+      const proofDetails = await this.getPreImage(traceAddress);
+      const packedDetails = abi.encode(
+        ["string"],
+        [JSON.stringify(proofDetails)]
+      );
+
       const _data = {
         traceAddress: traceAddress,
         verifiersRoot: details.verifiersRoot,
@@ -179,6 +186,7 @@ export class TraceProtocol extends Zk {
         message: "ok",
         transactionHash: receipt.transactionHash,
         verificationDetails: verifierDetails,
+        packedProofDetails: packedDetails,
         encryptionKey: key,
       };
     } catch (e) {
@@ -189,11 +197,16 @@ export class TraceProtocol extends Zk {
 
   public async createZkProof(
     traceAddress: string,
+    proofDetails: string,
     signer: Signer
   ): Promise<CreateProofReturn> {
     try {
+      const abi = ethers.utils.defaultAbiCoder;
       const provider = await this.getProvider();
-      const proof = await this.generateZkProof(traceAddress);
+      const decodeData = abi.decode(["string"], proofDetails);
+      const _proofDetails: ProofDetails = JSON.parse(decodeData[0]);
+
+      const proof = await this.generateZkProof(traceAddress, _proofDetails);
 
       const traceHub = new ethers.Contract(
         this.getTraceHubAddress(),

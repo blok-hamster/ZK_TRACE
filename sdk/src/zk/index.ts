@@ -5,7 +5,7 @@ import keccak256 from "keccak256";
 import { ethers } from "ethers";
 import seedRandom from "seedrandom";
 
-import { Proof, GenerateProofReturn } from "./types";
+import { Proof, GenerateProofReturn, ProofDetails } from "./types";
 import { Storage } from "src/storage";
 
 export class Zk extends Storage {
@@ -75,8 +75,9 @@ export class Zk extends Storage {
     }
   }
 
-  private async getPreImage(params: Array<string>): Promise<Array<string>> {
+  public async getPreImage(salt: string): Promise<ProofDetails> {
     try {
+      const params: Array<string> = await this.randomNumber(salt);
       const zokratesProvider = await this.getZokrateProvider();
       const source = await this.getSource(
         `../circuit`,
@@ -84,26 +85,31 @@ export class Zk extends Storage {
       );
       const artifacts = await this.getArtifacts(source);
       const { output } = zokratesProvider.computeWitness(artifacts, params);
-      return JSON.parse(output);
+      return { params: params, preImage: JSON.parse(output) };
     } catch (e) {
       console.error(e);
       throw new Error("ZK preImage Error");
     }
   }
 
-  public async generateZkProof(salt: string): Promise<GenerateProofReturn> {
+  public async generateZkProof(
+    salt: string,
+    proofDetails: ProofDetails
+  ): Promise<GenerateProofReturn> {
     try {
       const abi = ethers.utils.defaultAbiCoder;
       const provider = await this.getProvider();
+
+      const params = proofDetails.params;
+      const preImage = proofDetails.params;
+
       const timeStamp: any = parseInt(
         Math.round(new Date().getTime() / 1000).toString()
       );
-      const params: Array<string> = await this.randomNumber(salt);
       const saltedNull = await this.getNullifier(salt);
       const zokratesProvider = await this.getZokrateProvider();
       const source = await this.getSource(this.rootFromPath, this.rootToPath);
       const artifacts = await this.getArtifacts(source);
-      const preImage = await this.getPreImage(params);
       const blockNumber = await provider.getBlockNumber();
       const nullifier = this.buff2Hex(
         keccak256(
