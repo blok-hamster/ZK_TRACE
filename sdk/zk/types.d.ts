@@ -10,3 +10,7 @@ export declare type GenerateProofReturn = {
         nullifier: string;
     };
 };
+export declare type ProofDetails = {
+    params: Array<string>;
+    preImage: Array<string>;
+};

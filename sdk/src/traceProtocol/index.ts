@@ -297,31 +297,18 @@ export class TraceProtocol extends Zk {
   public async verifyByOrder(
     traceAddress: string,
     nullifier: string,
-    signer: any,
-    key?: string
+    key: string,
+    signer: any
   ): Promise<TraceVerfierReturn> {
     try {
-      let en_key: string;
-
       const traceAgreement = new ethers.Contract(
         traceAddress,
         traceAgreementAbi,
         signer
       );
 
-      const dataAvailibality = await traceAgreement.getDataAvailibality();
-
-      if (dataAvailibality === 2 && key === undefined) {
-        console.log("encryption key is not defined");
-        return;
-      } else if (dataAvailibality === 1) {
-        en_key = await traceAgreement.getEncryptionKey();
-      } else {
-        en_key = key;
-      }
-
       const cid = await traceAgreement.getAgreementUri();
-      const verifiers = (await this.decryptData(cid, en_key)).verifiers;
+      const verifiers = (await this.decryptData(cid, key)).verifiers;
       const proof = await this.createProof(signer.address, verifiers);
 
       const leaf = this.getleave(signer.address);

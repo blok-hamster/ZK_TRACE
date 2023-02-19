@@ -8,8 +8,10 @@ import {ITraceAgreementFactory} from "./factory/traceAgreementFactory.sol";
 
 contract TraceAgreement {
     
-    mapping (string => bytes32) merkelRoots; // holds the verifiers addresses
+    
     event Verified(uint indexed signCount , bool indexed verified);
+    mapping (string => bytes32) merkelRoots; // holds the verifiers addresses
+    mapping (bytes32 => bool) hasVerified;
     
     address public traceHub;
     address traceAdmin;
@@ -69,6 +71,9 @@ contract TraceAgreement {
     function verifyByOrder(bytes32[] memory _proof, bytes32 nullifier, bytes32 leaf) public  returns (bool) {
         bool verify;
         uint index_;
+        
+        require(leaf == keccak256(abi.encodePacked(msg.sender)), "not autorized verifier");
+        require(hasVerified[leaf] == false, "already verified");
 
         for(uint i = 0; i<nullifiers.length; i++){
             if (nullifiers[i] == nullifier){
@@ -99,6 +104,7 @@ contract TraceAgreement {
             signCount++;  
             verify = _verify;  
         }
+        hasVerified[leaf] = true;
         _checkVerificationState();
         emit Verified(signCount, verify);  
         return verify;

@@ -1,4 +1,4 @@
-import { GenerateProofReturn } from "./types";
+import { GenerateProofReturn, ProofDetails } from "./types";
 import { Storage } from "src/storage";
 export declare class Zk extends Storage {
     rootFromPath: string;
@@ -9,7 +9,7 @@ export declare class Zk extends Storage {
     private getSource;
     private getZokrateProvider;
     private getArtifacts;
-    private getPreImage;
-    generateZkProof(salt: string): Promise<GenerateProofReturn>;
+    getPreImage(salt: string): Promise<any>;
+    generateZkProof(salt: string, proofDetails: ProofDetails): Promise<GenerateProofReturn>;
     verifyZkProof(proofObj: any): Promise<any>;
 }

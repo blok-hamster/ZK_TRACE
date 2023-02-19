@@ -75,7 +75,7 @@ export class Zk extends Storage {
     }
   }
 
-  public async getPreImage(salt: string): Promise<ProofDetails> {
+  public async getPreImage(salt: string): Promise<any> {
     try {
       const params: Array<string> = await this.randomNumber(salt);
       const zokratesProvider = await this.getZokrateProvider();
@@ -101,7 +101,7 @@ export class Zk extends Storage {
       const provider = await this.getProvider();
 
       const params = proofDetails.params;
-      const preImage = proofDetails.params;
+      const preImage = proofDetails.preImage;
 
       const timeStamp: any = parseInt(
         Math.round(new Date().getTime() / 1000).toString()
