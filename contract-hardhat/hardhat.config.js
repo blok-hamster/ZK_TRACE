@@ -2,6 +2,8 @@ const { task } = require("hardhat/config");
 
 require("@nomiclabs/hardhat-ethers");
 require("@nomiclabs/hardhat-etherscan");
+require("hardhat-deploy");
+require("hardhat-deploy-ethers");
 //require("hardhat-contract-sizer");
 require("@nomiclabs/hardhat-waffle");
 //require("hardhat-gas-reporter");
@@ -27,15 +29,27 @@ module.exports = {
     hardhat: {
       // See its defaults
     },
-    hyperspace: {
+    filecoin: {
       chainId: 3141,
-      url: "https://api.hyperspace.node.glif.io/rpc/v1",
+      url: "https://filecoin-hyperspace.chainstacklabs.com/rpc/v1",
       accounts: [PRIVATE_KEY],
     },
 
     mantle: {
       chainId: 5001,
       url: "https://rpc.testnet.mantle.xyz/",
+      accounts: [PRIVATE_KEY],
+    },
+
+    polygon: {
+      chainId: 137,
+      url: "https://rpc.testnet.mantle.xyz/",
+      accounts: [PRIVATE_KEY],
+    },
+
+    polygonMumbai: {
+      chainId: 80001,
+      url: "",
       accounts: [PRIVATE_KEY],
     },
   },
@@ -62,6 +76,13 @@ module.exports = {
         },
       },
     ],
+  },
+
+  paths: {
+    sources: "./contracts",
+    tests: "./test",
+    cache: "./cache",
+    artifacts: "./artifacts",
   },
 
   contractSizer: {

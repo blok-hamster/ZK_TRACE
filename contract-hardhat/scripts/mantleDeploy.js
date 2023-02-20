@@ -1,9 +1,14 @@
 const hre = require("hardhat");
-const fa = require("@glif/filecoin-address");
 
-const hubAdmin = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266";
+const hubAdmin = "0x23142E15b262D787344671C4B079A0510C682527";
 
 async function main() {
+  const feeData = await provider.getFeeData();
+  const fee = {
+    maxFeePerGas: feeData.maxFeePerGas,
+    maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
+    //gasPrice: feeData.gasPrice,
+  };
   // import Contracts
   const TraceAgreement = await hre.ethers.getContractFactory("TraceAgreement");
   const TraceHub = await hre.ethers.getContractFactory("TraceHub");
@@ -11,19 +16,18 @@ async function main() {
     "TraceAgreementFactory"
   );
 
-  console.log(accounts[0]);
-
   // deploy contracts
-  const traceAgreementImplimentation = await TraceAgreement.deploy();
+  const traceAgreementImplimentation = await TraceAgreement.deploy(fee);
 
-  const traceHub = await TraceHub.deploy(hubAdmin);
+  const traceHub = await TraceHub.deploy(hubAdmin, fee);
 
   const traceFactory = await TraceFactroy.deploy(
     traceHub.address,
-    traceAgreementImplimentation.address
+    traceAgreementImplimentation.address,
+    fee
   );
 
-  const tx = await traceHub.addFactory(traceFactory.address);
+  const tx = await traceHub.addFactory(traceFactory.address, fee);
   await tx.wait();
 
   const addresses = {

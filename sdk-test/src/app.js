@@ -2,6 +2,9 @@ import ZkTrace from "zk-trace-sdk";
 import { ethers, Wallet } from "ethers";
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import promptly from "promptly";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const verifier1key =
   "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d";
@@ -10,14 +13,11 @@ const verifier2key =
 const verifier3key =
   "0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6";
 
-const detailsPath = "./traceDetails";
-
 const traceClient = new ZkTrace({
-  nodeEndpoint: "http://127.0.0.1:8545",
+  nodeEndpoint: process.env.QUICK_NODE_RPC,
   factoryAddress: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
   traceHubAddress: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-  web3storageApiKey:
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDZlOTA3MkJhNDkwZTZhNTE1NzE2MjBDMDFEMDIzNTA2ZTUzNkQ1NTIiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2NTY4OTMwNDEyNDQsIm5hbWUiOiJwaWNhcmR5X3Byb2ZpbGUifQ.d6_elcpPQfa69XyTHpp_iEvMbAMjoAkba5OFYJv28Xk",
+  web3storageApiKey: process.env.WEB3_STORAGE_KEY,
 });
 
 const main = async () => {
@@ -96,8 +96,6 @@ const createTraceAgreement = async () => {
     console.log("............Creating Trace Agreement............");
     console.log("................................................");
 
-    console.log("");
-    console.log("");
     console.log("");
     console.log("");
 
@@ -329,4 +327,7 @@ const verifyByOrder = async () => {
   })();
 };
 
-main();
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

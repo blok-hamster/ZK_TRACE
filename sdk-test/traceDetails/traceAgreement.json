@@ -1,8 +1,1 @@
-{
-  "message": "ok",
-  "transactionHash": "0x823e1f1ba52bfa36dd29227557c92be20e450cc0a86700c581c158b099bb7c37",
-  "details": {
-    "agreementAddress": "0xF83F8c952B7D814F0a4e8f1A2eF87b5B5d1F333e",
-    "agreementId": "8"
-  }
-}
+{"message":"ok","transactionHash":"0x1669b851a52e88d8e8ba5de03c24216e0f33b7e4f0dc35ccee65edfea81fd074","details":{"agreementAddress":"0x09bE60B98b1766bFD5318bc649fdC5de3498F847","agreementId":"10"}}
