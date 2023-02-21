@@ -76,6 +76,58 @@ const creatTraceAgreement = async (traceAdmin, supplier, privacy) = {
 
 ```
 
+web3.storage is used as a pinning service for easy pinning of The IPLD data blocks or CAR file.
+web3StorageApiKey is used to create a storage instance in the SDK. This can be gotten from https://web3.storage/
+-Create an account
+-Request an apiKey.
+
+## View encrypted IPLD data
+
+```
+import ZkTrace from "zk-trace-sdk";
+import { ethers, Wallet } from "ethers";
+import dotenv from "dotenv";
+dotenv.config();
+
+const traceClient = new ZkTrace({
+  nodeEndpoint: process.env.NODE_RPC_URL,
+  factoryAddress: "0x00a95101C4fe0fb4Cf659A6903703e10F7544059", //Filecoin-hyperspace testnet
+  traceHubAddress: "0x0DA397b9575429f25918592174103EecfF5a781A", //Filecoin-hyperspace testnet
+  web3storageApiKey: process.env.WEB3_STORAGE_KEY,
+});
+
+const readData = async (cid, key) => {
+    const result = await traceClient.decryptData(cid, key);
+    console.log(result);
+
+    /**
+        {
+            previousBlockId: "",
+            verifiers: [
+                <VERIFIER 1 ADDRESS>,
+                <VERIFIER 2 ADDRESS>,
+                <VERIFIER 3 ADDRESS>,
+                <VERIFIER 4 ADDRESS>
+                ],
+            txDetails: {
+                supplier: <SUPPLIER ADDRESS>,
+                pickupDate: <DATE IN UINX TIMESTAMP>,
+                totalPrice: <PRICE>,
+                location: <PICKUP VERIFIED PICKUP LOCATION>,
+                items: [
+                    {name: "Under armour", quantity: 10000,},
+                    {name: "Nike", quantity: 2000}
+                ],
+            }
+        }
+     */
+
+     //@notice data returned is equal to data encrypted.
+     //@dev The txDetails object is fully customizable to your need / data modual you wish to follow.
+}
+
+```
+
 ## Deployed addresses
 
 ### FILECOIN VM
@@ -99,3 +151,10 @@ const creatTraceAgreement = async (traceAdmin, supplier, privacy) = {
 | traceFactoryAddress        | 0x0DA397b9575429f25918592174103EecfF5a781A |
 | traceHubAddress            | 0x6FF826aacAea40713DAA03443491f07Fc5A549CD |
 | traceImplimentationAddress | 0x3907977976DBB9eAd7e825b3d34B5d0F97D22bC5 |
+
+@v1.0.0:
+-Initial implementation.
+
+@v1.0.1:
+-Added method to view IPLD encrypted data.
+-EIP1599 support

@@ -374,26 +374,6 @@ export class TraceProtocol extends Zk {
     }
   }
 
-  private async getVerifiersProof(verifiers: Array<string>): Promise<any> {
-    try {
-      const verifierDetails: Array<any> = [];
-      for (let i = 0; i < verifiers.length; i++) {
-        const proof = await this.createProof(verifiers[i], verifiers);
-        const e = {
-          verifier: verifiers[i],
-          merkelProof: await proof,
-        };
-
-        verifierDetails.push(e);
-      }
-
-      return verifierDetails;
-    } catch (e) {
-      console.error(e);
-      throw new Error("get verifier proof error");
-    }
-  }
-
   public async encryptionDetails(traceAddress: string): Promise<any> {
     try {
       const provider = await this.getProvider();
@@ -413,6 +393,26 @@ export class TraceProtocol extends Zk {
       };
     } catch (e) {
       console.error(e);
+    }
+  }
+
+  private async getVerifiersProof(verifiers: Array<string>): Promise<any> {
+    try {
+      const verifierDetails: Array<any> = [];
+      for (let i = 0; i < verifiers.length; i++) {
+        const proof = await this.createProof(verifiers[i], verifiers);
+        const e = {
+          verifier: verifiers[i],
+          merkelProof: await proof,
+        };
+
+        verifierDetails.push(e);
+      }
+
+      return verifierDetails;
+    } catch (e) {
+      console.error(e);
+      throw new Error("get verifier proof error");
     }
   }
 }
