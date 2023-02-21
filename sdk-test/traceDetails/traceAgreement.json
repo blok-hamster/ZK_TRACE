@@ -1,1 +1,8 @@
-{"message":"ok","transactionHash":"0x1669b851a52e88d8e8ba5de03c24216e0f33b7e4f0dc35ccee65edfea81fd074","details":{"agreementAddress":"0x09bE60B98b1766bFD5318bc649fdC5de3498F847","agreementId":"10"}}
+{
+  "message": "ok",
+  "transactionHash": "0x1669b851a52e88d8e8ba5de03c24216e0f33b7e4f0dc35ccee65edfea81fd074",
+  "details": {
+    "agreementAddress": "0x09bE60B98b1766bFD5318bc649fdC5de3498F847",
+    "agreementId": "10"
+  }
+}
