@@ -43,7 +43,7 @@ module.exports = {
 
     polygon: {
       chainId: 137,
-      url: "https://rpc.testnet.mantle.xyz/",
+      url: "",
       accounts: [PRIVATE_KEY],
     },
 

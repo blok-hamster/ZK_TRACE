@@ -65,4 +65,16 @@ export abstract class Base {
   protected getTraceHubAddress(): string {
     return this.traceHubAddress;
   }
+
+  protected getFeeData = async () => {
+    const provider = await this.getProvider();
+    const fee_data = await provider.getFeeData();
+    let fee = {
+      maxFeePerGas: fee_data.maxFeePerGas,
+      maxPriorityFeePerGas: fee_data.maxPriorityFeePerGas,
+      gasLimit: 5e6,
+    };
+
+    return fee;
+  };
 }

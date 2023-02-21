@@ -20,7 +20,8 @@ export class TraceProtocol extends Zk {
     signer: Signer
   ): Promise<CreateAgreementReturn> {
     try {
-      //const provider = await this.getProvider();
+      const fee = await this.getFeeData();
+
       const traceFactory = new ethers.Contract(
         this.getFactoryAddress(),
         traceFactoryAbi,
@@ -31,7 +32,8 @@ export class TraceProtocol extends Zk {
       const tx = await traceFactory.newTraceAgreement(
         adminAddress,
         supplierAddress,
-        dataAvailibality
+        dataAvailibality,
+        fee
       );
       const receipt = await tx.wait();
 
@@ -65,6 +67,7 @@ export class TraceProtocol extends Zk {
     signer: Signer
   ): Promise<boolean> {
     try {
+      const fee = await this.getFeeData();
       let events = [];
       const traceHub = new ethers.Contract(
         this.getTraceHubAddress(),
@@ -72,11 +75,7 @@ export class TraceProtocol extends Zk {
         signer
       );
 
-      const tx = await traceHub.acceptProposal(traceAddress, {
-        gasLimit: 210000,
-        maxFeePerGas: ethers.utils.parseUnits("80", "gwei"),
-        maxPriorityFeePerGas: ethers.utils.parseUnits("80", "gwei"),
-      });
+      const tx = await traceHub.acceptProposal(traceAddress, fee);
 
       const receipt = await tx.wait();
       if (receipt.status != 1) {
@@ -102,6 +101,7 @@ export class TraceProtocol extends Zk {
     signer: Signer
   ): Promise<InitializeAgreementReturn> {
     try {
+      const fee = await this.getFeeData();
       const verifierDetails: Array<any> = [];
 
       const abi = ethers.utils.defaultAbiCoder;
@@ -117,7 +117,7 @@ export class TraceProtocol extends Zk {
         signer
       );
 
-      if ((await traceAgreement.checkIsInitilized) == true) {
+      if ((await traceAgreement.checkIsInitilized()) == true) {
         console.log("Trace Agreement already initilized");
         return;
       }
@@ -160,11 +160,7 @@ export class TraceProtocol extends Zk {
         details.nullifiers,
         write.cid,
         en_key,
-        {
-          gasLimit: 21000000,
-          maxFeePerGas: ethers.utils.parseUnits("80", "gwei"),
-          maxPriorityFeePerGas: ethers.utils.parseUnits("80", "gwei"),
-        }
+        fee
       );
 
       const receipt = await tx.wait();
@@ -188,6 +184,7 @@ export class TraceProtocol extends Zk {
         verificationDetails: verifierDetails,
         packedProofDetails: packedDetails,
         encryptionKey: key,
+        cid: write.cid,
       };
     } catch (e) {
       console.error(e);
@@ -201,8 +198,8 @@ export class TraceProtocol extends Zk {
     signer: Signer
   ): Promise<CreateProofReturn> {
     try {
+      const fee = await this.getFeeData();
       const abi = ethers.utils.defaultAbiCoder;
-      const provider = await this.getProvider();
       const decodeData = abi.decode(["string"], proofDetails);
       const _proofDetails: ProofDetails = JSON.parse(decodeData[0]);
 
@@ -219,11 +216,11 @@ export class TraceProtocol extends Zk {
         console.log("Supplier has not approved");
         return;
       }
-      const tx = await traceHub.zkProof(traceAddress, proof.details.nullifier, {
-        gasLimit: 21000000,
-        maxFeePerGas: ethers.utils.parseUnits("80", "gwei"),
-        maxPriorityFeePerGas: ethers.utils.parseUnits("80", "gwei"),
-      });
+      const tx = await traceHub.zkProof(
+        traceAddress,
+        proof.details.nullifier,
+        fee
+      );
 
       const receipt = await tx.wait();
       if (receipt.status != 1) {
@@ -244,7 +241,7 @@ export class TraceProtocol extends Zk {
     signer: Signer
   ): Promise<any> {
     try {
-      const provider = await this.getProvider();
+      const fee = await this.getFeeData();
       const traceHub = new ethers.Contract(
         this.getTraceHubAddress(),
         traceHubAbi,
@@ -272,11 +269,7 @@ export class TraceProtocol extends Zk {
       const tx = await traceHub.initiateAgreement(
         traceAddress,
         proof.nullifier,
-        {
-          gasLimit: 21000000,
-          maxFeePerGas: ethers.utils.parseUnits("80", "gwei"),
-          maxPriorityFeePerGas: ethers.utils.parseUnits("80", "gwei"),
-        }
+        fee
       );
 
       const receipt = await tx.wait();
@@ -287,6 +280,7 @@ export class TraceProtocol extends Zk {
 
       return {
         message: "ok",
+        transactionHash: receipt.transactionHash,
       };
     } catch (e) {
       console.error(e);
@@ -301,6 +295,7 @@ export class TraceProtocol extends Zk {
     signer: any
   ): Promise<TraceVerfierReturn> {
     try {
+      const fee = await this.getFeeData();
       const traceAgreement = new ethers.Contract(
         traceAddress,
         traceAgreementAbi,
@@ -314,11 +309,12 @@ export class TraceProtocol extends Zk {
       const leaf = this.getleave(signer.address);
 
       let events = [];
-      const tx = await traceAgreement.verifyByOrder(proof, nullifier, leaf, {
-        gasLimit: 210000,
-        maxFeePerGas: ethers.utils.parseUnits("80", "gwei"),
-        maxPriorityFeePerGas: ethers.utils.parseUnits("80", "gwei"),
-      });
+      const tx = await traceAgreement.verifyByOrder(
+        proof,
+        nullifier,
+        leaf,
+        fee
+      );
 
       const receipt = await tx.wait();
       if (receipt.status != 1) {
@@ -345,7 +341,7 @@ export class TraceProtocol extends Zk {
     }
   }
 
-  public async getVerifiersDetails(
+  private async getVerifiersDetails(
     verifiers: Array<string>
   ): Promise<verifierDetails> {
     try {
@@ -378,7 +374,7 @@ export class TraceProtocol extends Zk {
     }
   }
 
-  public async getVerifiersProof(verifiers: Array<string>): Promise<any> {
+  private async getVerifiersProof(verifiers: Array<string>): Promise<any> {
     try {
       const verifierDetails: Array<any> = [];
       for (let i = 0; i < verifiers.length; i++) {

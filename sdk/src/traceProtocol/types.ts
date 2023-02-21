@@ -32,6 +32,7 @@ export declare type InitializeAgreementReturn = {
   verificationDetails: Array<object>;
   packedProofDetails: string;
   encryptionKey: string;
+  cid: string;
 };
 
 export declare type CreateAgreementReturn = {

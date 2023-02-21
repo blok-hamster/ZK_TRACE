@@ -19,5 +19,10 @@ export declare abstract class Base {
     protected getProvider(): Promise<any>;
     protected getFactoryAddress(): string;
     protected getTraceHubAddress(): string;
+    protected getFeeData: () => Promise<{
+        maxFeePerGas: any;
+        maxPriorityFeePerGas: any;
+        gasLimit: number;
+    }>;
 }
 export {};
