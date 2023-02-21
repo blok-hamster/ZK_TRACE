@@ -157,4 +157,4 @@ const readData = async (cid, key) => {
 
 @v1.0.1:
 -Added method to view IPLD encrypted data.
--EIP1599 support
+-EIP1559 support
