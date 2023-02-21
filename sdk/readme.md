@@ -2,7 +2,7 @@
 
 zkTrace is a protocol that combines the power of blockchain for trustlessness, and zero knowledge for privacy, to provide safe and confidential business processes, correctly order events and increase work flow at no cost (gasless).
 
-The protocol provides the Trace Agreement smart contract that handles the entire lifecycle of the supply chain. The Trace Agreement contract becomes active after an agreement has been met between supplier and buyer. This is to validate the private collaborations between parties without leaking sensitive data.
+The protocol provides the Trace Agreement smart contract that handles the entire lifecycle of the supply chain. The Trace Agreement contract becomes active after an agreement has been met between supplier and buyer. A cryptographic zero knowledge proof is generated for the trace agreement. This is to validate the private collaborations between parties without leaking sensitive data.
 
 It is built to ensure easy and trustless agreement between corporations and entities.
 
@@ -19,6 +19,13 @@ The verifier addresses are not stored on the smart contract. They are encrypted 
 zkTrace protocol provides a javascript SDK the can be used to interract with the protocol. This SDK provides all the methods to needed integrate or build with zkTrace
 
 ### Using zk-trace-sdk @v1.0.0
+
+First import zk-trace-sdk
+
+```
+npm i zk-trace-sdk
+
+```
 
 ```
 import ZkTrace from "zk-trace-sdk";
