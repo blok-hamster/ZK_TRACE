@@ -35,8 +35,8 @@ dotenv.config();
 
 const traceClient = new ZkTrace({
   nodeEndpoint: process.env.NODE_RPC_URL,
-  factoryAddress: "0x00a95101C4fe0fb4Cf659A6903703e10F7544059", //Filecoin-hyperspace testnet
-  traceHubAddress: "0x0DA397b9575429f25918592174103EecfF5a781A", //Filecoin-hyperspace testnet
+  factoryAddress: "0x3907977976DBB9eAd7e825b3d34B5d0F97D22bC5",
+  traceHubAddress: "0x839201D2756E8fe9ee9a32170EC295E40F5fb22d",
   web3storageApiKey: process.env.WEB3_STORAGE_KEY,
 });
 
@@ -91,8 +91,8 @@ dotenv.config();
 
 const traceClient = new ZkTrace({
   nodeEndpoint: process.env.NODE_RPC_URL,
-  factoryAddress: "0x00a95101C4fe0fb4Cf659A6903703e10F7544059", //Filecoin-hyperspace testnet
-  traceHubAddress: "0x0DA397b9575429f25918592174103EecfF5a781A", //Filecoin-hyperspace testnet
+  factoryAddress: "0x3907977976DBB9eAd7e825b3d34B5d0F97D22bC5",
+  traceHubAddress: "0x839201D2756E8fe9ee9a32170EC295E40F5fb22d",
   web3storageApiKey: process.env.WEB3_STORAGE_KEY,
 });
 
