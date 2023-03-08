@@ -1,6 +1,6 @@
 {
   "name": "zk-trace-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Sdk for integrating ZK trace into supplychain managment systems",
   "main": "dist/index.js",
   "module": "dist/index.module.js",
