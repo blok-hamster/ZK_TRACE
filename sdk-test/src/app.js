@@ -6,6 +6,9 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+//0x70997970C51812dc3A010C7d01b50e0d17dc79C8 verifier1
+//0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC verifier2
+
 const verifier1key =
   "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d";
 const verifier2key =
@@ -15,8 +18,8 @@ const verifier3key =
 
 const traceClient = new ZkTrace({
   nodeEndpoint: process.env.QUICK_NODE_RPC,
-  factoryAddress: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-  traceHubAddress: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+  factoryAddress: "0x9A676e781A523b5d0C0e43731313A708CB607508",
+  traceHubAddress: "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
   web3storageApiKey: process.env.WEB3_STORAGE_KEY,
 });
 

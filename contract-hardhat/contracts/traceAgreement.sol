@@ -69,7 +69,6 @@ contract TraceAgreement {
 
     function verifyByOrder(bytes32[] memory _proof, bytes32 nullifier, bytes32 leaf) public  returns (bool) {
         uint id = ITraceAgreementFactory(factoryAddress).getId(address(this));
-        require(this.checkState() == 2, "Agreement not Active");
 
         bool verify;
         uint index_;

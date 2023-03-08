@@ -38,7 +38,7 @@ module.exports = {
 
     fantomTestnet: {
       chainId: 4002,
-      url: "https://rpc.testnet.fantom.network",
+      url: "https://endpoints.omniatech.io/v1/fantom/testnet/public",
       accounts: [PRIVATE_KEY],
     },
 
@@ -88,12 +88,9 @@ module.exports = {
     only: [],
   },
 
-  gasReporter: {
-    currency: "USD",
-    coinmarketcap: process.env.COINMARKETCAP_API_KEY,
-  },
-
   etherscan: {
     apiKey: process.env.FTM_SCAN_KEY,
+
+    customChains: [],
   },
 };

@@ -6,9 +6,7 @@ import {ITraceAgreement} from "./traceAgreement.sol";
 
 
 contract TraceHub is AccessControl {
-    
-    event RoleGranted(address indexed hubAdmin);
-    event RoleRevoked(address indexed hubAdmin);
+
     event DeafultAdminChanged(address indexed newDefaultAdmin);
     event ProposalAccepted(bool indexed accepted);
     struct Agreement {
@@ -131,12 +129,10 @@ contract TraceHub is AccessControl {
 
     function grantAdminRole(address hubAdmin) external onlyDefaultAdmin {
         grantRole(HUB_ADMIN, hubAdmin);
-        emit RoleGranted(hubAdmin);
     }
 
     function removeRole(address addr) external onlyDefaultAdmin {
         revokeRole(HUB_ADMIN, addr);
-        emit RoleRevoked(addr);
     }
 
     function changeDeafultAdmin(address newDeafultAdmin) external onlyDefaultAdmin{
