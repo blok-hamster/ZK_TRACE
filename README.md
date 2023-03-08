@@ -35,8 +35,8 @@ dotenv.config();
 
 const traceClient = new ZkTrace({
   nodeEndpoint: process.env.NODE_RPC_URL,
-  factoryAddress: "0x00a95101C4fe0fb4Cf659A6903703e10F7544059", //Filecoin-hyperspace testnet
-  traceHubAddress: "0x0DA397b9575429f25918592174103EecfF5a781A", //Filecoin-hyperspace testnet
+  factoryAddress: "0x00a95101C4fe0fb4Cf659A6903703e10F7544059", 
+  traceHubAddress: "0x0DA397b9575429f25918592174103EecfF5a781A",
   web3storageApiKey: process.env.WEB3_STORAGE_KEY,
 });
 
