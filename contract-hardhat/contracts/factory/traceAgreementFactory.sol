@@ -4,7 +4,8 @@ import {TraceAgreement} from "../traceAgreement.sol";
 import {ITraceHub} from "../traceHub.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-contract TraceAgreementFactory {
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+contract TraceAgreementFactory is  ERC1155 {
     
     address traceAgreementImplementation;
     event AgreementCreated(uint indexed time, address indexed agreementAddress, uint indexed id);
@@ -22,7 +23,7 @@ contract TraceAgreementFactory {
 
     uint agreementId;
 
-    constructor(address _traceHub, address _traceAgreementImplementation) {
+    constructor(address _traceHub, address _traceAgreementImplementation) ERC1155("") {
         traceHub = _traceHub;
         traceAgreementImplementation = _traceAgreementImplementation;
     }
@@ -47,6 +48,22 @@ contract TraceAgreementFactory {
         TraceAgreementDetails memory _traceDetails = TraceAgreementDetails({verifierRoot: _verifierRoot,  nullifiers: _nullifiers, agreementUri: agreementUri, agreementId: id});
         traceDetails[_traceAgreement] = _traceDetails;
         ITraceHub(traceHub).updatAgreementLog(_traceAgreement, agreementUri, _nullifiers, id, enKey);
+    }
+
+    function uri(uint256 tokenId) override public view returns(string memory){
+        address t_address = idToAddress[tokenId];
+        TraceAgreement traceAgreement = TraceAgreement(t_address);
+        string memory cid = traceAgreement.getAgreementUri();
+        return string(abi.encodePacked("https://ipfs.io/api/v0/dag/get/", cid));
+    }
+
+    function createInvoice(address account, uint256 id, uint256 amount) external returns (bool) {
+        address t_address = idToAddress[id];
+        TraceAgreement traceAgreement = TraceAgreement(t_address);
+        require (msg.sender == t_address,"Un-Auth: Only TraceAgreement");
+        require (traceAgreement.checkState() == 4, "Trace Agreement still Active");
+        _mint(account, id, amount, "");
+        return true;
     }
 
     function getAgreementDetais(address agreementAddress) external view returns(TraceAgreementDetails memory){
@@ -77,4 +94,5 @@ interface ITraceAgreementFactory{
     function initilizeAgreement(bytes32 _verifierRoot,bytes32[] calldata _nullifiers,string calldata agreementUri, address  _traceAgreement, string memory enKey) external ;
     function getAgreementDetais(address agreementAddress) external view returns(TraceAgreementDetails memory);
     function getId(address agreementAddress) external view returns(uint);
+    function createInvoice(address account, uint256 id, uint256 amount) external returns (bool);
 }

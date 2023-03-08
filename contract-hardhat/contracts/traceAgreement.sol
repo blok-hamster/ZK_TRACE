@@ -8,7 +8,6 @@ import {ITraceAgreementFactory} from "./factory/traceAgreementFactory.sol";
 
 contract TraceAgreement {
     
-    
     event Verified(uint indexed signCount , bool indexed verified);
     mapping (string => bytes32) merkelRoots; // holds the verifiers addresses
     mapping (bytes32 => bool) hasVerified;
@@ -48,27 +47,30 @@ contract TraceAgreement {
     
 
     function initilize(bytes32 _verifierRoot, bytes32[] calldata _nullifiers,string calldata _agreementUri, string memory enKey) external {
+        uint id = ITraceAgreementFactory(factoryAddress).getId(address(this));
         require(msg.sender == traceAdmin, "Un-auth: Not trace admin");
         require(!initilized, "already intilized");
         require(status == AgreementStatus.Created, "Agreement is already active");
         require(signCount == 0, "Agreement is already active");
-        _updateRoot(_verifierRoot);
         agreementUri = _agreementUri;
         en_key = enKey;
         nullifiers = _nullifiers;
         initilized = true;
+        _updateRoot(_verifierRoot, id);
         ITraceAgreementFactory(factoryAddress).initilizeAgreement( _verifierRoot, _nullifiers,agreementUri, address(this), enKey);
     }
 
-    function _updateRoot(bytes32 verifierRoot) internal {
+    function _updateRoot(bytes32 verifierRoot, uint id) internal {
         string memory _verifierRoot = "verifierRoot";
-        uint id = ITraceHub(traceHub).getAgreementId(address(this));
         merkelRoots[_verifierRoot] = verifierRoot;
         agreements.agreementId = id;
         agreements.createdAt = block.timestamp;
     }
 
     function verifyByOrder(bytes32[] memory _proof, bytes32 nullifier, bytes32 leaf) public  returns (bool) {
+        uint id = ITraceAgreementFactory(factoryAddress).getId(address(this));
+        require(this.checkState() == 2, "Agreement not Active");
+
         bool verify;
         uint index_;
         
@@ -106,7 +108,15 @@ contract TraceAgreement {
         }
         hasVerified[leaf] = true;
         _checkVerificationState();
-        emit Verified(signCount, verify);  
+        emit Verified(signCount, verify);
+
+        if(this.checkState() == 4){
+            bool os = ITraceAgreementFactory(factoryAddress).createInvoice(supplier, id, 1);
+            bool _os = ITraceAgreementFactory(factoryAddress).createInvoice(traceAdmin, id, 1);
+            require(os);
+            require(_os);
+        }
+
         return verify;
     }
 
@@ -175,4 +185,5 @@ interface ITraceAgreement {
     function verifyByOrder(bytes32[] memory _proof, bytes32 nullifier) external view returns (bool);
     function getTraceAdmin() external view returns(address);
     function activate() external returns(bool);
+    function getAgreementUri() external view returns(string memory);
 }

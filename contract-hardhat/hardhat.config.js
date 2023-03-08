@@ -8,7 +8,7 @@ require("hardhat-deploy-ethers");
 require("@nomiclabs/hardhat-waffle");
 //require("hardhat-gas-reporter");
 require("solidity-docgen");
-require("dotenv").config();
+const dotenv = require("dotenv").config();
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
 task("accounts", "Prints The List Of Accounts", async (taskArgs, hre) => {
@@ -29,17 +29,6 @@ module.exports = {
     hardhat: {
       // See its defaults
     },
-    filecoin: {
-      chainId: 3141,
-      url: "https://filecoin-hyperspace.chainstacklabs.com/rpc/v1",
-      accounts: [PRIVATE_KEY],
-    },
-
-    mantle: {
-      chainId: 5001,
-      url: "https://rpc.testnet.mantle.xyz/",
-      accounts: [PRIVATE_KEY],
-    },
 
     polygon: {
       chainId: 137,
@@ -47,9 +36,15 @@ module.exports = {
       accounts: [PRIVATE_KEY],
     },
 
-    polygonMumbai: {
-      chainId: 80001,
-      url: "",
+    fantomTestnet: {
+      chainId: 4002,
+      url: "https://rpc.testnet.fantom.network",
+      accounts: [PRIVATE_KEY],
+    },
+
+    fantom: {
+      chainId: 250,
+      url: "https://rpc2.fantom.network",
       accounts: [PRIVATE_KEY],
     },
   },
@@ -96,5 +91,9 @@ module.exports = {
   gasReporter: {
     currency: "USD",
     coinmarketcap: process.env.COINMARKETCAP_API_KEY,
+  },
+
+  etherscan: {
+    apiKey: process.env.FTM_SCAN_KEY,
   },
 };
